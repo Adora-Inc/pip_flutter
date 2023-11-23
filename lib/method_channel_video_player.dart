@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
-import 'pipflutter_player_buffering_configuration.dart';
-import 'video_player_platform_interface.dart';
+import 'package:pip_flutter/pipflutter_player_buffering_configuration.dart';
+import 'package:pip_flutter/video_player_platform_interface.dart';
 
 const MethodChannel _channel = MethodChannel('pipflutter_player_channel');
 

@@ -14,9 +14,8 @@ class PipFlutterPlayerMaterialVideoProgressBar extends StatefulWidget {
     this.onDragStart,
     this.onDragUpdate,
     this.onTapDown,
-    Key? key,
-  })  : colors = colors ?? PipFlutterPlayerProgressColors(),
-        super(key: key);
+    super.key,
+  })  : colors = colors ?? PipFlutterPlayerProgressColors();
 
   final VideoPlayerController? controller;
   final PipFlutterPlayerController? pipFlutterPlayerController;
@@ -159,7 +158,7 @@ class _VideoProgressBarState
     }
   }
 
-  void seekToRelativePosition(Offset globalPosition) async {
+  Future<void> seekToRelativePosition(Offset globalPosition) async {
     final RenderObject? renderObject = context.findRenderObject();
     if (renderObject != null) {
       final box = renderObject as RenderBox;

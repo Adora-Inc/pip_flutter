@@ -9,7 +9,7 @@ import 'package:pip_flutter/pipflutter_player_multiple_gesture_detector.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
 import 'package:pip_flutter/video_player.dart';
 
-import 'pipflutter_player_progress_colors.dart';
+import 'package:pip_flutter/pipflutter_player_progress_colors.dart';
 
 class PipFlutterPlayerMaterialControls extends StatefulWidget {
   ///Callback used to send information if player bar is hidden or not
@@ -19,10 +19,10 @@ class PipFlutterPlayerMaterialControls extends StatefulWidget {
   final PipFlutterPlayerControlsConfiguration controlsConfiguration;
 
   const PipFlutterPlayerMaterialControls({
-    Key? key,
+    super.key,
     required this.onControlsVisibilityChanged,
     required this.controlsConfiguration,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -134,12 +134,12 @@ class _PipFlutterPlayerMaterialControlsState
 
   @override
   void didChangeDependencies() {
-    final _oldController = _pipFlutterPlayerController;
+    final oldController = _pipFlutterPlayerController;
     _pipFlutterPlayerController = PipFlutterPlayerController.of(context);
     _controller = _pipFlutterPlayerController!.videoPlayerController;
     _latestValue = _controller!.value;
 
-    if (_oldController != _pipFlutterPlayerController) {
+    if (oldController != _pipFlutterPlayerController) {
       _dispose();
       _initialize();
     }

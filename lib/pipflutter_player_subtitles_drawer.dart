@@ -14,12 +14,12 @@ class PipFlutterPlayerSubtitlesDrawer extends StatefulWidget {
   final Stream<bool> playerVisibilityStream;
 
   const PipFlutterPlayerSubtitlesDrawer({
-    Key? key,
+    super.key,
     required this.subtitles,
     required this.pipFlutterPlayerController,
     this.pipFlutterPlayerSubtitlesConfiguration,
     required this.playerVisibilityStream,
-  }) : super(key: key);
+  });
 
   @override
   _PipFlutterPlayerSubtitlesDrawerState createState() =>

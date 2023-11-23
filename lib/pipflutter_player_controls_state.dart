@@ -13,7 +13,7 @@ import 'package:pip_flutter/pipflutter_player_subtitles_source.dart';
 import 'package:pip_flutter/pipflutter_player_subtitles_source_type.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
 import 'package:pip_flutter/video_player.dart';
-import 'pipflutter_player_controller.dart';
+import 'package:pip_flutter/pipflutter_player_controller.dart';
 
 ///Base class for both material and cupertino controls
 abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>

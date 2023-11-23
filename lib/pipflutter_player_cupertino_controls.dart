@@ -20,8 +20,8 @@ class PipFlutterPlayerCupertinoControls extends StatefulWidget {
   const PipFlutterPlayerCupertinoControls({
     required this.onControlsVisibilityChanged,
     required this.controlsConfiguration,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<StatefulWidget> createState() {

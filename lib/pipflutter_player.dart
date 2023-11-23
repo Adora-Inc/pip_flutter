@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pip_flutter/pipflutter_player_configuration.dart';
@@ -16,8 +17,7 @@ import 'package:wakelock/wakelock.dart';
 
 ///Widget which uses provided controller to render video player.
 class PipFlutterPlayer extends StatefulWidget {
-  const PipFlutterPlayer({Key? key, required this.controller})
-      : super(key: key);
+  const PipFlutterPlayer({super.key, required this.controller});
 
   factory PipFlutterPlayer.network(
     String url, {
@@ -254,7 +254,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
     }
 
     if (!_pipFlutterPlayerConfiguration.allowedScreenSleep) {
-      Wakelock.enable();
+      unawaited(Wakelock.enable());
     }
 
     await Navigator.of(context, rootNavigator: true).push(route);
@@ -263,7 +263,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
 
     // The wakelock plugins checks whether it needs to perform an action internally,
     // so we do not need to check Wakelock.isEnabled.
-    Wakelock.disable();
+    unawaited(Wakelock.disable());
 
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen);

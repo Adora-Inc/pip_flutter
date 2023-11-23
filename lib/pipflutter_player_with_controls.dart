@@ -16,8 +16,7 @@ import 'package:pip_flutter/video_player.dart';
 class PipFlutterPlayerWithControls extends StatefulWidget {
   final PipFlutterPlayerController? controller;
 
-  const PipFlutterPlayerWithControls({Key? key, this.controller})
-      : super(key: key);
+  const PipFlutterPlayerWithControls({super.key, this.controller});
 
   @override
   _PipFlutterPlayerWithControlsState createState() =>
@@ -218,9 +217,7 @@ class _PipFlutterPlayerWithControlsState
 class _PipFlutterPlayerVideoFitWidget extends StatefulWidget {
   const _PipFlutterPlayerVideoFitWidget(
     this.pipFlutterPlayerController,
-    this.boxFit, {
-    Key? key,
-  }) : super(key: key);
+    this.boxFit);
 
   final PipFlutterPlayerController pipFlutterPlayerController;
   final BoxFit boxFit;

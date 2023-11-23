@@ -5,7 +5,7 @@ import 'package:pip_flutter/pipflutter_player_asms_data_holder.dart';
 import 'package:pip_flutter/pipflutter_player_dash_utils.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
 
-import 'pipflutter_player_hls_utils.dart';
+import 'package:pip_flutter/pipflutter_player_hls_utils.dart';
 
 ///Base helper class for ASMS parsing.
 class PipFlutterPlayerAsmsUtils {

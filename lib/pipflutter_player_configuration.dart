@@ -4,7 +4,7 @@ import 'package:pip_flutter/pipflutter_player.dart';
 import 'package:pip_flutter/pipflutter_player_controls_configuration.dart';
 import 'package:pip_flutter/pipflutter_player_subtitles_configuration.dart';
 import 'package:pip_flutter/pipflutter_player_translations.dart';
-import 'pipflutter_player_event.dart';
+import 'package:pip_flutter/pipflutter_player_event.dart';
 
 ///Configuration of PipFlutter Player. Allows to setup general behavior of player.
 ///Master configuration which contains children that configure specific part
