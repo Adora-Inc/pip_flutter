@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pip_flutter/pipflutter_player_controller.dart';
 import 'package:pip_flutter/pipflutter_player_controller_event.dart';
@@ -17,9 +18,8 @@ class PipFlutterPlayerWithControls extends StatefulWidget {
   final PipFlutterPlayerController? controller;
 
   const PipFlutterPlayerWithControls({super.key, this.controller});
-
   @override
-  _PipFlutterPlayerWithControlsState createState() =>
+  State<PipFlutterPlayerWithControls> createState() =>
       _PipFlutterPlayerWithControlsState();
 }
 
@@ -47,9 +47,9 @@ class _PipFlutterPlayerWithControlsState
   }
 
   @override
-  void didUpdateWidget(PipFlutterPlayerWithControls oldWidget) {
+  Future<void> didUpdateWidget(PipFlutterPlayerWithControls oldWidget) async {
     if (oldWidget.controller != widget.controller) {
-      _controllerEventSubscription?.cancel();
+      await _controllerEventSubscription?.cancel();
       _controllerEventSubscription =
           widget.controller!.controllerEventStream.listen(_onControllerChanged);
     }
@@ -58,8 +58,8 @@ class _PipFlutterPlayerWithControlsState
 
   @override
   void dispose() {
-    playerVisibilityStreamController.close();
-    _controllerEventSubscription?.cancel();
+    unawaited(playerVisibilityStreamController.close());
+    unawaited(_controllerEventSubscription?.cancel());
     super.dispose();
   }
 
@@ -216,8 +216,7 @@ class _PipFlutterPlayerWithControlsState
 ///Widget used to set the proper box fit of the video. Default fit is 'fill'.
 class _PipFlutterPlayerVideoFitWidget extends StatefulWidget {
   const _PipFlutterPlayerVideoFitWidget(
-    this.pipFlutterPlayerController,
-    this.boxFit);
+      this.pipFlutterPlayerController, this.boxFit);
 
   final PipFlutterPlayerController pipFlutterPlayerController;
   final BoxFit boxFit;
@@ -332,7 +331,7 @@ class _PipFlutterPlayerVideoFitWidgetState
       widget.pipFlutterPlayerController.videoPlayerController!
           .removeListener(_initializedListener!);
     }
-    _controllerEventSubscription?.cancel();
+    unawaited(_controllerEventSubscription?.cancel());
     super.dispose();
   }
 }

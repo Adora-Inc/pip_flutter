@@ -172,7 +172,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     bool autoCreate = true,
   }) : super(VideoPlayerValue(duration: null)) {
     if (autoCreate) {
-      _create();
+      unawaited(_create());
     }
   }
 
@@ -204,7 +204,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     unawaited(_applyLooping());
     unawaited(_applyVolume());
 
-    void eventListener(VideoEvent event) {
+    Future<void> eventListener(VideoEvent event) async {
       if (_isDisposed) {
         return;
       }
@@ -216,7 +216,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
             size: event.size,
           );
           _initializingCompleter.complete(null);
-          _applyPlayPause();
+          await _applyPlayPause();
           break;
         case VideoEventType.completed:
           value = value.copyWith(isPlaying: false, position: value.duration);
@@ -235,13 +235,13 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           break;
 
         case VideoEventType.play:
-          play();
+          await play();
           break;
         case VideoEventType.pause:
-          pause();
+          await pause();
           break;
         case VideoEventType.seek:
-          seekTo(event.position);
+          await seekTo(event.position);
           break;
         case VideoEventType.pipStart:
           value = value.copyWith(isPip: true);
@@ -614,12 +614,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     value = value.copyWith();
   }
 
-  void setAudioTrack(String? name, int? index) {
-    _videoPlayerPlatform.setAudioTrack(_textureId, name, index);
+  Future<void> setAudioTrack(String? name, int? index) async {
+    await _videoPlayerPlatform.setAudioTrack(_textureId, name, index);
   }
 
-  void setMixWithOthers(bool mixWithOthers) {
-    _videoPlayerPlatform.setMixWithOthers(_textureId, mixWithOthers);
+  Future<void> setMixWithOthers(bool mixWithOthers) async {
+    await _videoPlayerPlatform.setMixWithOthers(_textureId, mixWithOthers);
   }
 
   static Future clearCache() async {
@@ -645,7 +645,7 @@ class VideoPlayer extends StatefulWidget {
   final VideoPlayerController? controller;
 
   @override
-  _VideoPlayerState createState() => _VideoPlayerState();
+  State<VideoPlayer> createState() => _VideoPlayerState();
 }
 
 class _VideoPlayerState extends State<VideoPlayer> {
@@ -754,44 +754,44 @@ class _VideoScrubberState extends State<_VideoScrubber> {
 
   @override
   Widget build(BuildContext context) {
-    void seekToRelativePosition(Offset globalPosition) {
+    Future<void> seekToRelativePosition(Offset globalPosition) async {
       final RenderObject? renderObject = context.findRenderObject();
       if (renderObject != null) {
         final RenderBox box = renderObject as RenderBox;
         final Offset tapPos = box.globalToLocal(globalPosition);
         final double relative = tapPos.dx / box.size.width;
         final Duration position = controller.value.duration! * relative;
-        controller.seekTo(position);
+        await controller.seekTo(position);
       }
     }
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onHorizontalDragStart: (DragStartDetails details) {
+      onHorizontalDragStart: (DragStartDetails details) async {
         if (!controller.value.initialized) {
           return;
         }
         _controllerWasPlaying = controller.value.isPlaying;
         if (_controllerWasPlaying) {
-          controller.pause();
+          await controller.pause();
         }
       },
-      onHorizontalDragUpdate: (DragUpdateDetails details) {
+      onHorizontalDragUpdate: (DragUpdateDetails details) async {
         if (!controller.value.initialized) {
           return;
         }
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
       },
-      onHorizontalDragEnd: (DragEndDetails details) {
+      onHorizontalDragEnd: (DragEndDetails details) async {
         if (_controllerWasPlaying) {
-          controller.play();
+          await controller.play();
         }
       },
-      onTapDown: (TapDownDetails details) {
+      onTapDown: (TapDownDetails details) async {
         if (!controller.value.initialized) {
           return;
         }
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
       },
       child: widget.child,
     );
@@ -842,7 +842,7 @@ class VideoProgressIndicator extends StatefulWidget {
   final EdgeInsets padding;
 
   @override
-  _VideoProgressIndicatorState createState() => _VideoProgressIndicatorState();
+  State<VideoProgressIndicator> createState() => _VideoProgressIndicatorState();
 }
 
 class _VideoProgressIndicatorState extends State<VideoProgressIndicator> {

@@ -46,11 +46,8 @@ class PipFlutterPlayer extends StatefulWidget {
       );
 
   final PipFlutterPlayerController controller;
-
   @override
-  _PipFlutterPlayerState createState() {
-    return _PipFlutterPlayerState();
-  }
+  State<PipFlutterPlayer> createState() => _PipFlutterPlayerState();
 }
 
 class _PipFlutterPlayerState extends State<PipFlutterPlayer>
@@ -76,13 +73,13 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
   }
 
   @override
-  void didChangeDependencies() {
+  Future<void> didChangeDependencies() async {
     if (!_initialized) {
       final navigator = Navigator.of(context);
       setState(() {
         _navigatorState = navigator;
       });
-      _setup();
+      await _setup();
       _initialized = true;
     }
     super.didChangeDependencies();
@@ -106,45 +103,45 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     ///If somehow PipFlutterPlayer widget has been disposed from widget tree and
     ///full screen is on, then full screen route must be pop and return to normal
     ///state.
     if (_isFullScreen) {
-      Wakelock.disable();
-      _navigatorState.maybePop();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+      await Wakelock.disable();
+      await _navigatorState.maybePop();
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
           overlays:
               _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen);
-      SystemChrome.setPreferredOrientations(
+      await SystemChrome.setPreferredOrientations(
           _pipFlutterPlayerConfiguration.deviceOrientationsAfterFullScreen);
     }
 
     WidgetsBinding.instance.removeObserver(this);
-    _controllerEventSubscription?.cancel();
-    widget.controller.dispose();
+    await _controllerEventSubscription?.cancel();
+    await widget.controller.dispose();
     VisibilityDetectorController.instance
         .forget(Key("${widget.controller.hashCode}_key"));
     super.dispose();
   }
 
   @override
-  void didUpdateWidget(PipFlutterPlayer oldWidget) {
+  Future<void> didUpdateWidget(PipFlutterPlayer oldWidget) async {
     if (oldWidget.controller != widget.controller) {
-      _controllerEventSubscription?.cancel();
+      await _controllerEventSubscription?.cancel();
       _controllerEventSubscription =
           widget.controller.controllerEventStream.listen(onControllerEvent);
     }
     super.didUpdateWidget(oldWidget);
   }
 
-  void onControllerEvent(PipFlutterPlayerControllerEvent event) {
+  Future<void> onControllerEvent(PipFlutterPlayerControllerEvent event) async {
     switch (event) {
       case PipFlutterPlayerControllerEvent.openFullscreen:
-        onFullScreenChanged();
+        await onFullScreenChanged();
         break;
       case PipFlutterPlayerControllerEvent.hideFullscreen:
-        onFullScreenChanged();
+        await onFullScreenChanged();
         break;
       default:
         setState(() {});
@@ -274,7 +271,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
   Widget _buildPlayer() {
     return VisibilityDetector(
       key: Key("${widget.controller.hashCode}_key"),
-      onVisibilityChanged: (VisibilityInfo info) =>
+      onVisibilityChanged: (VisibilityInfo info) async =>
           widget.controller.onPlayerVisibilityChanged(info.visibleFraction),
       child: PipFlutterPlayerWithControls(
         controller: widget.controller,
@@ -283,9 +280,9 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
-    widget.controller.setAppLifecycleState(state);
+    await widget.controller.setAppLifecycleState(state);
   }
 }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:pip_flutter/pipflutter_player_controller.dart';
 import 'package:pip_flutter/pipflutter_player_progress_colors.dart';
@@ -15,7 +16,7 @@ class PipFlutterPlayerMaterialVideoProgressBar extends StatefulWidget {
     this.onDragUpdate,
     this.onTapDown,
     super.key,
-  })  : colors = colors ?? PipFlutterPlayerProgressColors();
+  }) : colors = colors ?? PipFlutterPlayerProgressColors();
 
   final VideoPlayerController? controller;
   final PipFlutterPlayerController? pipFlutterPlayerController;
@@ -24,16 +25,14 @@ class PipFlutterPlayerMaterialVideoProgressBar extends StatefulWidget {
   final Function()? onDragEnd;
   final Function()? onDragUpdate;
   final Function()? onTapDown;
-
   @override
-  _VideoProgressBarState createState() {
-    return _VideoProgressBarState();
-  }
+  State<PipFlutterPlayerMaterialVideoProgressBar> createState() =>
+      _PipFlutterPlayerMaterialVideoProgressBarState();
 }
 
-class _VideoProgressBarState
+class _PipFlutterPlayerMaterialVideoProgressBarState
     extends State<PipFlutterPlayerMaterialVideoProgressBar> {
-  _VideoProgressBarState() {
+  _PipFlutterPlayerMaterialVideoProgressBarState() {
     listener = () {
       setState(() {});
     };

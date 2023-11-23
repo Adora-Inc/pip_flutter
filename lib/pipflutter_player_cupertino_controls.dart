@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pip_flutter/pipflutter_player_controller.dart';
@@ -112,14 +113,14 @@ class _PipFlutterPlayerCupertinoControlsState
             ? cancelAndRestartTimer()
             : changePlayerControlsNotVisible(true);
       },
-      onDoubleTap: () {
+      onDoubleTap: () async {
         if (PipFlutterPlayerMultipleGestureDetector.of(context) != null) {
           PipFlutterPlayerMultipleGestureDetector.of(context)!
               .onDoubleTap
               ?.call();
         }
         cancelAndRestartTimer();
-        _onPlayPause();
+        await _onPlayPause();
       },
       onLongPress: () {
         if (PipFlutterPlayerMultipleGestureDetector.of(context) != null) {
@@ -137,27 +138,27 @@ class _PipFlutterPlayerCupertinoControlsState
 
   @override
   void dispose() {
-    _dispose();
+    unawaited(_dispose());
     super.dispose();
   }
 
-  void _dispose() {
+  Future<void> _dispose() async {
     _controller!.removeListener(_updateState);
     _hideTimer?.cancel();
     _expandCollapseTimer?.cancel();
     _initTimer?.cancel();
-    _controlsVisibilityStreamSubscription?.cancel();
+    await _controlsVisibilityStreamSubscription?.cancel();
   }
 
   @override
-  void didChangeDependencies() {
+  Future<void> didChangeDependencies() async {
     final oldController = _pipFlutterPlayerController;
     _pipFlutterPlayerController = PipFlutterPlayerController.of(context);
     _controller = _pipFlutterPlayerController!.videoPlayerController;
 
     if (oldController != _pipFlutterPlayerController) {
-      _dispose();
-      _initialize();
+      await _dispose();
+      await _initialize();
     }
 
     super.didChangeDependencies();
@@ -310,8 +311,8 @@ class _PipFlutterPlayerCupertinoControlsState
     double buttonPadding,
   ) {
     return GestureDetector(
-      onTap: () {
-        onShowMoreClicked();
+      onTap: () async {
+        await onShowMoreClicked();
       },
       child: AnimatedOpacity(
         opacity: controlsNotVisible ? 0.0 : 1.0,
@@ -348,14 +349,14 @@ class _PipFlutterPlayerCupertinoControlsState
     double buttonPadding,
   ) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         cancelAndRestartTimer();
 
         if (_latestValue!.volume == 0) {
-          controller!.setVolume(_latestVolume ?? 0.5);
+          await controller!.setVolume(_latestVolume ?? 0.5);
         } else {
           _latestVolume = controller!.value.volume;
-          controller.setVolume(0.0);
+          await controller.setVolume(0.0);
         }
       },
       child: AnimatedOpacity(
@@ -653,7 +654,7 @@ class _PipFlutterPlayerCupertinoControlsState
     );
   }
 
-  void _onPlayPause() {
+  Future<void> _onPlayPause() async {
     bool isFinished = false;
 
     if (_latestValue?.position != null && _latestValue?.duration != null) {
@@ -663,7 +664,7 @@ class _PipFlutterPlayerCupertinoControlsState
     if (_controller!.value.isPlaying) {
       changePlayerControlsNotVisible(false);
       _hideTimer?.cancel();
-      _pipFlutterPlayerController!.pause();
+      await _pipFlutterPlayerController!.pause();
     } else {
       cancelAndRestartTimer();
 
@@ -671,14 +672,14 @@ class _PipFlutterPlayerCupertinoControlsState
         if (_pipFlutterPlayerController!
                 .pipFlutterPlayerDataSource?.liveStream ==
             true) {
-          _pipFlutterPlayerController!.play();
+          await _pipFlutterPlayerController!.play();
           _pipFlutterPlayerController!.cancelNextVideoTimer();
         }
       } else {
         if (isFinished) {
-          _pipFlutterPlayerController!.seekTo(const Duration());
+          await _pipFlutterPlayerController!.seekTo(const Duration());
         }
-        _pipFlutterPlayerController!.play();
+        await _pipFlutterPlayerController!.play();
         _pipFlutterPlayerController!.cancelNextVideoTimer();
       }
     }
@@ -739,8 +740,8 @@ class _PipFlutterPlayerCupertinoControlsState
             ),
             if (_controlsConfiguration.enableRetry)
               TextButton(
-                onPressed: () {
-                  _pipFlutterPlayerController!.retryDataSource();
+                onPressed: () async {
+                  await _pipFlutterPlayerController!.retryDataSource();
                 },
                 child: Text(
                   _pipFlutterPlayerController!.translations.generalRetry,
@@ -778,8 +779,8 @@ class _PipFlutterPlayerCupertinoControlsState
         if (isPipSupported &&
             _pipFlutterPlayerController!.pipFlutterPlayerGlobalKey != null) {
           return GestureDetector(
-            onTap: () {
-              pipFlutterPlayerController!.enablePictureInPicture(
+            onTap: () async {
+              await pipFlutterPlayerController!.enablePictureInPicture(
                   pipFlutterPlayerController!.pipFlutterPlayerGlobalKey!);
             },
             child: AnimatedOpacity(

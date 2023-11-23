@@ -230,7 +230,7 @@ class PipFlutterPlayerController {
   }) {
     _eventListeners.add(eventListener);
     if (pipFlutterPlayerDataSource != null) {
-      setupDataSource(pipFlutterPlayerDataSource);
+      unawaited(setupDataSource(pipFlutterPlayerDataSource));
     }
   }
 
@@ -279,15 +279,15 @@ class PipFlutterPlayerController {
     if (_isDataSourceAsms(pipFlutterPlayerDataSource)) {
       await _setupAsmsDataSource(pipFlutterPlayerDataSource);
     }
-    _setupSubtitles();
+    await _setupSubtitles();
 
     ///Process data source
     await _setupDataSource(pipFlutterPlayerDataSource);
-    setTrack(PipFlutterPlayerAsmsTrack.defaultTrack());
+    await setTrack(PipFlutterPlayerAsmsTrack.defaultTrack());
   }
 
   ///Configure subtitles based on subtitles source.
-  void _setupSubtitles() {
+  Future<void> _setupSubtitles() async {
     _pipFlutterPlayerSubtitlesSourceList.add(
       PipFlutterPlayerSubtitlesSource(
           type: PipFlutterPlayerSubtitlesSourceType.none),
@@ -296,7 +296,7 @@ class PipFlutterPlayerController {
         .firstWhereOrNull((element) => element.selectedByDefault == true);
 
     ///Setup subtitles (none is default)
-    setupSubtitleSource(
+    await setupSubtitleSource(
         defaultSubtitle ?? _pipFlutterPlayerSubtitlesSourceList.last,
         sourceInitialize: true);
   }
@@ -355,7 +355,7 @@ class PipFlutterPlayerController {
           _isDataSourceAsms(pipFlutterPlayerDataSource!)) {
         _pipFlutterPlayerAsmsAudioTracks = response.audios ?? [];
         if (_pipFlutterPlayerAsmsAudioTracks?.isNotEmpty == true) {
-          setAudioTrack(_pipFlutterPlayerAsmsAudioTracks!.first);
+          await setAudioTrack(_pipFlutterPlayerAsmsAudioTracks!.first);
         }
       }
     }
@@ -925,7 +925,7 @@ class PipFlutterPlayerController {
 
   ///Setup track parameters for currently played video. Can be only used for HLS or DASH
   ///data source.
-  void setTrack(PipFlutterPlayerAsmsTrack track) {
+  Future<void> setTrack(PipFlutterPlayerAsmsTrack track) async {
     if (videoPlayerController == null) {
       throw StateError("The data source has not been initialized");
     }
@@ -940,7 +940,7 @@ class PipFlutterPlayerController {
           "mimeType": track.mimeType,
         }));
 
-    videoPlayerController!
+    await videoPlayerController!
         .setTrackParameters(track.width, track.height, track.bitrate);
     _pipFlutterPlayerAsmsTrack = track;
   }
@@ -1047,17 +1047,17 @@ class PipFlutterPlayerController {
   ///player starts playing again. if lifecycle is in [AppLifecycleState.paused]
   ///state, then video playback will stop. If showNotification is set in data
   ///source or handleLifecycle is false then this logic will be ignored.
-  void setAppLifecycleState(AppLifecycleState appLifecycleState) {
+  Future<void> setAppLifecycleState(AppLifecycleState appLifecycleState) async {
     if (_isAutomaticPlayPauseHandled()) {
       _appLifecycleState = appLifecycleState;
       if (appLifecycleState == AppLifecycleState.resumed) {
         if (_wasPlayingBeforePause == true && _isPlayerVisible) {
-          play();
+          await play();
         }
       }
       if (appLifecycleState == AppLifecycleState.paused) {
         _wasPlayingBeforePause ??= isPlaying();
-        pause();
+        await pause();
       }
     }
   }
@@ -1216,7 +1216,7 @@ class PipFlutterPlayerController {
   }
 
   ///Set [audioTrack] in player. Works only for HLS or DASH streams.
-  void setAudioTrack(PipFlutterPlayerAsmsAudioTrack audioTrack) {
+  Future<void> setAudioTrack(PipFlutterPlayerAsmsAudioTrack audioTrack) async {
     if (videoPlayerController == null) {
       throw StateError("The data source has not been initialized");
     }
@@ -1227,16 +1227,16 @@ class PipFlutterPlayerController {
     }
 
     _pipFlutterPlayerAsmsAudioTrack = audioTrack;
-    videoPlayerController!.setAudioTrack(audioTrack.label, audioTrack.id);
+    await videoPlayerController!.setAudioTrack(audioTrack.label, audioTrack.id);
   }
 
   ///Enable or disable audio mixing with other sound within device.
-  void setMixWithOthers(bool mixWithOthers) {
+  Future<void> setMixWithOthers(bool mixWithOthers) async {
     if (videoPlayerController == null) {
       throw StateError("The data source has not been initialized");
     }
 
-    videoPlayerController!.setMixWithOthers(mixWithOthers);
+    await videoPlayerController!.setMixWithOthers(mixWithOthers);
   }
 
   ///Clear all cached data. Video player controller must be initialized to
@@ -1302,28 +1302,28 @@ class PipFlutterPlayerController {
   ///Dispose PipFlutterPlayerController. When [forceDispose] parameter is true, then
   ///autoDispose parameter will be overridden and controller will be disposed
   ///(if it wasn't disposed before).
-  void dispose({bool forceDispose = false}) {
+  Future<void> dispose({bool forceDispose = false}) async {
     if (!pipFlutterPlayerConfiguration.autoDispose && !forceDispose) {
       return;
     }
     if (!_disposed) {
       if (videoPlayerController != null) {
-        pause();
+        await pause();
         videoPlayerController!.removeListener(_onFullScreenStateChanged);
         videoPlayerController!.removeListener(_onVideoPlayerChanged);
-        videoPlayerController!.dispose();
+        await videoPlayerController!.dispose();
       }
       _eventListeners.clear();
       _nextVideoTimer?.cancel();
-      _nextVideoTimeStreamController.close();
-      _controlsVisibilityStreamController.close();
-      _videoEventStreamSubscription?.cancel();
+      await _nextVideoTimeStreamController.close();
+      await _controlsVisibilityStreamController.close();
+      await _videoEventStreamSubscription?.cancel();
       _disposed = true;
-      _controllerEventStreamController.close();
+      await _controllerEventStreamController.close();
 
       ///Delete files async
       for (var file in _tempFiles) {
-        file.delete();
+        await file.delete();
       }
     }
   }

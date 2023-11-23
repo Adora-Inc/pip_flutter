@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'dart:math';
+
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pip_flutter/pipflutter_player_asms_audio_track.dart';
 import 'package:pip_flutter/pipflutter_player_asms_track.dart';
 import 'package:pip_flutter/pipflutter_player_clickable_widget.dart';
+import 'package:pip_flutter/pipflutter_player_controller.dart';
 import 'package:pip_flutter/pipflutter_player_controls_configuration.dart';
 import 'package:pip_flutter/pipflutter_player_event.dart';
 import 'package:pip_flutter/pipflutter_player_event_type.dart';
@@ -13,7 +15,6 @@ import 'package:pip_flutter/pipflutter_player_subtitles_source.dart';
 import 'package:pip_flutter/pipflutter_player_subtitles_source_type.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
 import 'package:pip_flutter/video_player.dart';
-import 'package:pip_flutter/pipflutter_player_controller.dart';
 
 ///Base class for both material and cupertino controls
 abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
@@ -40,7 +41,7 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
         videoPlayerValue.position >= videoPlayerValue.duration!;
   }
 
-  void skipBack() {
+  Future<void> skipBack() async {
     if (latestValue != null) {
       cancelAndRestartTimer();
       final beginning = const Duration().inMilliseconds;
@@ -49,12 +50,12 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
                   milliseconds: pipFlutterPlayerControlsConfiguration
                       .backwardSkipTimeInMilliseconds))
           .inMilliseconds;
-      pipFlutterPlayerController!
+      await pipFlutterPlayerController!
           .seekTo(Duration(milliseconds: max(skip, beginning)));
     }
   }
 
-  void skipForward() {
+  Future<void> skipForward() async {
     if (latestValue != null) {
       cancelAndRestartTimer();
       final end = latestValue!.duration!.inMilliseconds;
@@ -63,13 +64,13 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
                   milliseconds: pipFlutterPlayerControlsConfiguration
                       .forwardSkipTimeInMilliseconds))
           .inMilliseconds;
-      pipFlutterPlayerController!
+      await pipFlutterPlayerController!
           .seekTo(Duration(milliseconds: min(skip, end)));
     }
   }
 
-  void onShowMoreClicked() {
-    _showModalBottomSheet([_buildMoreOptionsList()]);
+  Future<void> onShowMoreClicked() async {
+    await _showModalBottomSheet([_buildMoreOptionsList()]);
   }
 
   Widget _buildMoreOptionsList() {
@@ -82,30 +83,30 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
             if (pipFlutterPlayerControlsConfiguration.enablePlaybackSpeed)
               _buildMoreOptionsListRow(
                   pipFlutterPlayerControlsConfiguration.playbackSpeedIcon,
-                  translations.overflowMenuPlaybackSpeed, () {
+                  translations.overflowMenuPlaybackSpeed, () async {
                 Navigator.of(context).pop();
-                _showSpeedChooserWidget();
+                await _showSpeedChooserWidget();
               }),
             if (pipFlutterPlayerControlsConfiguration.enableSubtitles)
               _buildMoreOptionsListRow(
                   pipFlutterPlayerControlsConfiguration.subtitlesIcon,
-                  translations.overflowMenuSubtitles, () {
+                  translations.overflowMenuSubtitles, () async {
                 Navigator.of(context).pop();
-                _showSubtitlesSelectionWidget();
+                await _showSubtitlesSelectionWidget();
               }),
             if (pipFlutterPlayerControlsConfiguration.enableQualities)
               _buildMoreOptionsListRow(
                   pipFlutterPlayerControlsConfiguration.qualitiesIcon,
-                  translations.overflowMenuQuality, () {
+                  translations.overflowMenuQuality, () async {
                 Navigator.of(context).pop();
-                _showQualitiesSelectionWidget();
+                await _showQualitiesSelectionWidget();
               }),
             if (pipFlutterPlayerControlsConfiguration.enableAudioTracks)
               _buildMoreOptionsListRow(
                   pipFlutterPlayerControlsConfiguration.audioTracksIcon,
-                  translations.overflowMenuAudioTracks, () {
+                  translations.overflowMenuAudioTracks, () async {
                 Navigator.of(context).pop();
-                _showAudioTracksSelectionWidget();
+                await _showAudioTracksSelectionWidget();
               }),
             if (pipFlutterPlayerControlsConfiguration
                 .overflowMenuCustomItems.isNotEmpty)
@@ -151,8 +152,8 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
     );
   }
 
-  void _showSpeedChooserWidget() {
-    _showModalBottomSheet([
+  Future<void> _showSpeedChooserWidget() async {
+    await _showModalBottomSheet([
       _buildSpeedRow(0.25),
       _buildSpeedRow(0.5),
       _buildSpeedRow(0.75),
@@ -169,9 +170,9 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
         pipFlutterPlayerController!.videoPlayerController!.value.speed == value;
 
     return PipFlutterPlayerMaterialClickableWidget(
-      onTap: () {
+      onTap: () async {
         Navigator.of(context).pop();
-        pipFlutterPlayerController!.setSpeed(value);
+        await pipFlutterPlayerController!.setSpeed(value);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -223,7 +224,7 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
     return false;
   }
 
-  void _showSubtitlesSelectionWidget() {
+  Future<void> _showSubtitlesSelectionWidget() async {
     final subtitles = List.of(
         pipFlutterPlayerController!.pipFlutterPlayerSubtitlesSourceList);
     final noneSubtitlesElementExists = subtitles.firstWhereOrNull((source) =>
@@ -234,7 +235,7 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
           type: PipFlutterPlayerSubtitlesSourceType.none));
     }
 
-    _showModalBottomSheet(
+    await _showModalBottomSheet(
         subtitles.map((source) => _buildSubtitlesSourceRow(source)).toList());
   }
 
@@ -247,9 +248,9 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
             subtitlesSource.type == selectedSourceType!.type);
 
     return PipFlutterPlayerMaterialClickableWidget(
-      onTap: () {
+      onTap: () async {
         Navigator.of(context).pop();
-        pipFlutterPlayerController!.setupSubtitleSource(subtitlesSource);
+        await pipFlutterPlayerController!.setupSubtitleSource(subtitlesSource);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -280,7 +281,7 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
   ///Build both track and resolution selection
   ///Track selection is used for HLS / DASH videos
   ///Resolution selection is used for normal videos
-  void _showQualitiesSelectionWidget() {
+  Future<void> _showQualitiesSelectionWidget() async {
     // HLS / DASH
     final List<String> asmsTrackNames = pipFlutterPlayerController!
             .pipFlutterPlayerDataSource!.asmsTrackNames ??
@@ -315,7 +316,7 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
       );
     }
 
-    _showModalBottomSheet(children);
+    await _showModalBottomSheet(children);
   }
 
   Widget _buildTrackRow(
@@ -332,9 +333,9 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
     final bool isSelected = selectedTrack != null && selectedTrack == track;
 
     return PipFlutterPlayerMaterialClickableWidget(
-      onTap: () {
+      onTap: () async {
         Navigator.of(context).pop();
-        pipFlutterPlayerController!.setTrack(track);
+        await pipFlutterPlayerController!.setTrack(track);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -363,9 +364,9 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
     final bool isSelected =
         url == pipFlutterPlayerController!.pipFlutterPlayerDataSource!.url;
     return PipFlutterPlayerMaterialClickableWidget(
-      onTap: () {
+      onTap: () async {
         Navigator.of(context).pop();
-        pipFlutterPlayerController!.setResolution(url);
+        await pipFlutterPlayerController!.setResolution(url);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -390,7 +391,7 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
     );
   }
 
-  void _showAudioTracksSelectionWidget() {
+  Future<void> _showAudioTracksSelectionWidget() async {
     //HLS / DASH
     final List<PipFlutterPlayerAsmsAudioTrack>? asmsTracks =
         pipFlutterPlayerController!.pipFlutterPlayerAsmsAudioTracks;
@@ -416,15 +417,15 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
       );
     }
 
-    _showModalBottomSheet(children);
+    await _showModalBottomSheet(children);
   }
 
   Widget _buildAudioTrackRow(
       PipFlutterPlayerAsmsAudioTrack audioTrack, bool isSelected) {
     return PipFlutterPlayerMaterialClickableWidget(
-      onTap: () {
+      onTap: () async {
         Navigator.of(context).pop();
-        pipFlutterPlayerController!.setAudioTrack(audioTrack);
+        await pipFlutterPlayerController!.setAudioTrack(audioTrack);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -459,14 +460,14 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
     );
   }
 
-  void _showModalBottomSheet(List<Widget> children) {
-    Platform.isAndroid
+  Future<void> _showModalBottomSheet(List<Widget> children) async {
+    return Platform.isAndroid
         ? _showMaterialBottomSheet(children)
         : _showCupertinoModalBottomSheet(children);
   }
 
-  void _showCupertinoModalBottomSheet(List<Widget> children) {
-    showCupertinoModalPopup<void>(
+  Future<void> _showCupertinoModalBottomSheet(List<Widget> children) async {
+    await showCupertinoModalPopup<void>(
       barrierColor: Colors.transparent,
       context: context,
       useRootNavigator: pipFlutterPlayerController
@@ -496,8 +497,8 @@ abstract class PipFlutterPlayerControlsState<T extends StatefulWidget>
     );
   }
 
-  void _showMaterialBottomSheet(List<Widget> children) {
-    showModalBottomSheet<void>(
+  Future<void> _showMaterialBottomSheet(List<Widget> children) async {
+    await showModalBottomSheet<void>(
       backgroundColor: Colors.transparent,
       context: context,
       useRootNavigator: pipFlutterPlayerController

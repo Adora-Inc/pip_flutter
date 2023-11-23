@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:pip_flutter/pipflutter_player_controller.dart';
 import 'package:pip_flutter/pipflutter_player_progress_colors.dart';
@@ -15,7 +16,7 @@ class PipFlutterPlayerCupertinoVideoProgressBar extends StatefulWidget {
     this.onDragUpdate,
     this.onTapDown,
     super.key,
-  })  : colors = colors ?? PipFlutterPlayerProgressColors();
+  }) : colors = colors ?? PipFlutterPlayerProgressColors();
 
   final VideoPlayerController? controller;
   final PipFlutterPlayerController? pipFlutterPlayerController;
@@ -26,14 +27,13 @@ class PipFlutterPlayerCupertinoVideoProgressBar extends StatefulWidget {
   final Function()? onTapDown;
 
   @override
-  _VideoProgressBarState createState() {
-    return _VideoProgressBarState();
-  }
+  State<PipFlutterPlayerCupertinoVideoProgressBar> createState() =>
+      _PipFlutterPlayerCupertinoVideoProgressBarState();
 }
 
-class _VideoProgressBarState
+class _PipFlutterPlayerCupertinoVideoProgressBarState
     extends State<PipFlutterPlayerCupertinoVideoProgressBar> {
-  _VideoProgressBarState() {
+  _PipFlutterPlayerCupertinoVideoProgressBarState() {
     listener = () {
       setState(() {});
     };
@@ -71,24 +71,24 @@ class _VideoProgressBarState
         .controlsConfiguration
         .enableProgressBarDrag;
     return GestureDetector(
-      onHorizontalDragStart: (DragStartDetails details) {
+      onHorizontalDragStart: (DragStartDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
         _controllerWasPlaying = controller!.value.isPlaying;
         if (_controllerWasPlaying) {
-          controller!.pause();
+          await controller!.pause();
         }
 
         if (widget.onDragStart != null) {
           widget.onDragStart!();
         }
       },
-      onHorizontalDragUpdate: (DragUpdateDetails details) {
+      onHorizontalDragUpdate: (DragUpdateDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
 
         if (widget.onDragUpdate != null) {
           widget.onDragUpdate!();
