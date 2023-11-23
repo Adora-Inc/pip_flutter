@@ -5,8 +5,8 @@ version: 0.0.3
 homepage: https://github.com/kesmitopiwala/pip_flutter/blob/master/example/lib/main.dart
 
 environment:
-  sdk: ">=2.18.2 <3.0.0"
-  flutter: ">=1.20.0"
+  flutter: "3.13.2"
+  sdk: ">=3.1.0"
 
 dependencies:
   collection: ^1.15.0
