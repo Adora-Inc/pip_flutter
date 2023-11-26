@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:pip_flutter/pipflutter_player_clickable_widget.dart';
 import 'package:pip_flutter/pipflutter_player_controller.dart';
@@ -6,10 +7,9 @@ import 'package:pip_flutter/pipflutter_player_controls_configuration.dart';
 import 'package:pip_flutter/pipflutter_player_controls_state.dart';
 import 'package:pip_flutter/pipflutter_player_material_progress_bar.dart';
 import 'package:pip_flutter/pipflutter_player_multiple_gesture_detector.dart';
+import 'package:pip_flutter/pipflutter_player_progress_colors.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
 import 'package:pip_flutter/video_player.dart';
-
-import 'package:pip_flutter/pipflutter_player_progress_colors.dart';
 
 class PipFlutterPlayerMaterialControls extends StatefulWidget {
   ///Callback used to send information if player bar is hidden or not
@@ -119,29 +119,29 @@ class _PipFlutterPlayerMaterialControlsState
   }
 
   @override
-  void dispose() {
-    _dispose();
+  Future<void> dispose() async {
+    await _dispose();
     super.dispose();
   }
 
-  void _dispose() {
+  Future<void> _dispose() async {
     _controller?.removeListener(_updateState);
     _hideTimer?.cancel();
     _initTimer?.cancel();
     _showAfterExpandCollapseTimer?.cancel();
-    _controlsVisibilityStreamSubscription?.cancel();
+    await _controlsVisibilityStreamSubscription?.cancel();
   }
 
   @override
-  void didChangeDependencies() {
+  Future<void> didChangeDependencies() async {
     final oldController = _pipFlutterPlayerController;
     _pipFlutterPlayerController = PipFlutterPlayerController.of(context);
     _controller = _pipFlutterPlayerController!.videoPlayerController;
     _latestValue = _controller!.value;
 
     if (oldController != _pipFlutterPlayerController) {
-      _dispose();
-      _initialize();
+      await _dispose();
+      await _initialize();
     }
 
     super.didChangeDependencies();
@@ -172,8 +172,8 @@ class _PipFlutterPlayerMaterialControlsState
             ),
             if (_controlsConfiguration.enableRetry)
               TextButton(
-                onPressed: () {
-                  _pipFlutterPlayerController!.retryDataSource();
+                onPressed: () async {
+                  await _pipFlutterPlayerController!.retryDataSource();
                 },
                 child: Text(
                   _pipFlutterPlayerController!.translations.generalRetry,
@@ -219,8 +219,8 @@ class _PipFlutterPlayerMaterialControlsState
 
   Widget _buildPipButton() {
     return PipFlutterPlayerMaterialClickableWidget(
-      onTap: () {
-        pipFlutterPlayerController!.enablePictureInPicture(
+      onTap: () async {
+        await pipFlutterPlayerController!.enablePictureInPicture(
             pipFlutterPlayerController!.pipFlutterPlayerGlobalKey!);
       },
       child: Padding(
@@ -236,6 +236,7 @@ class _PipFlutterPlayerMaterialControlsState
   Widget _buildPipButtonWrapperWidget(
       bool hideStuff, void Function() onPlayerHide) {
     return FutureBuilder<bool>(
+      // ignore: discarded_futures
       future: pipFlutterPlayerController!.isPictureInPictureSupported(),
       builder: (context, snapshot) {
         final bool isPipSupported = snapshot.data ?? false;
@@ -264,8 +265,8 @@ class _PipFlutterPlayerMaterialControlsState
 
   Widget _buildMoreButton() {
     return PipFlutterPlayerMaterialClickableWidget(
-      onTap: () {
-        onShowMoreClicked();
+      onTap: () async {
+        await onShowMoreClicked();
       },
       child: Padding(
         padding: const EdgeInsets.all(8),
@@ -459,7 +460,7 @@ class _PipFlutterPlayerMaterialControlsState
               size: 42,
               color: _controlsConfiguration.iconsColor,
             ),
-      onClicked: () {
+      onClicked: () async {
         if (isFinished) {
           if (_latestValue != null && _latestValue!.isPlaying) {
             if (_displayTapped) {
@@ -468,11 +469,11 @@ class _PipFlutterPlayerMaterialControlsState
               cancelAndRestartTimer();
             }
           } else {
-            _onPlayPause();
+            await _onPlayPause();
             changePlayerControlsNotVisible(true);
           }
         } else {
-          _onPlayPause();
+          await _onPlayPause();
         }
       },
     );
@@ -519,13 +520,13 @@ class _PipFlutterPlayerMaterialControlsState
     VideoPlayerController? controller,
   ) {
     return PipFlutterPlayerMaterialClickableWidget(
-      onTap: () {
+      onTap: () async {
         cancelAndRestartTimer();
         if (_latestValue!.volume == 0) {
-          _pipFlutterPlayerController!.setVolume(_latestVolume ?? 0.5);
+          await _pipFlutterPlayerController!.setVolume(_latestVolume ?? 0.5);
         } else {
           _latestVolume = controller!.value.volume;
-          _pipFlutterPlayerController!.setVolume(0.0);
+          await _pipFlutterPlayerController!.setVolume(0.0);
         }
       },
       child: AnimatedOpacity(
@@ -643,7 +644,7 @@ class _PipFlutterPlayerMaterialControlsState
     });
   }
 
-  void _onPlayPause() {
+  Future<void> _onPlayPause() async {
     bool isFinished = false;
 
     if (_latestValue?.position != null && _latestValue?.duration != null) {
@@ -653,16 +654,16 @@ class _PipFlutterPlayerMaterialControlsState
     if (_controller!.value.isPlaying) {
       changePlayerControlsNotVisible(false);
       _hideTimer?.cancel();
-      _pipFlutterPlayerController!.pause();
+      await _pipFlutterPlayerController!.pause();
     } else {
       cancelAndRestartTimer();
 
       if (!_controller!.value.initialized) {
       } else {
         if (isFinished) {
-          _pipFlutterPlayerController!.seekTo(const Duration());
+          await _pipFlutterPlayerController!.seekTo(const Duration());
         }
-        _pipFlutterPlayerController!.play();
+        await _pipFlutterPlayerController!.play();
         _pipFlutterPlayerController!.cancelNextVideoTimer();
       }
     }

@@ -773,6 +773,7 @@ class _PipFlutterPlayerCupertinoControlsState
     double buttonPadding,
   ) {
     return FutureBuilder<bool>(
+      // ignore: discarded_futures
       future: _pipFlutterPlayerController!.isPictureInPictureSupported(),
       builder: (context, snapshot) {
         final isPipSupported = snapshot.data ?? false;

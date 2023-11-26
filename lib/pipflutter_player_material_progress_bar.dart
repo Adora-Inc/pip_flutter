@@ -71,38 +71,38 @@ class _PipFlutterPlayerMaterialVideoProgressBarState
         .enableProgressBarDrag;
 
     return GestureDetector(
-      onHorizontalDragStart: (DragStartDetails details) {
+      onHorizontalDragStart: (DragStartDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
 
         _controllerWasPlaying = controller!.value.isPlaying;
         if (_controllerWasPlaying) {
-          controller!.pause();
+          await controller!.pause();
         }
 
         if (widget.onDragStart != null) {
           widget.onDragStart!();
         }
       },
-      onHorizontalDragUpdate: (DragUpdateDetails details) {
+      onHorizontalDragUpdate: (DragUpdateDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
 
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
 
         if (widget.onDragUpdate != null) {
           widget.onDragUpdate!();
         }
       },
-      onHorizontalDragEnd: (DragEndDetails details) {
+      onHorizontalDragEnd: (DragEndDetails details) async {
         if (!enableProgressBarDrag) {
           return;
         }
 
         if (_controllerWasPlaying) {
-          pipFlutterPlayerController?.play();
+          await pipFlutterPlayerController?.play();
           shouldPlayAfterDragEnd = true;
         }
         _setupUpdateBlockTimer();
@@ -111,11 +111,11 @@ class _PipFlutterPlayerMaterialVideoProgressBarState
           widget.onDragEnd!();
         }
       },
-      onTapDown: (TapDownDetails details) {
+      onTapDown: (TapDownDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
         _setupUpdateBlockTimer();
         if (widget.onTapDown != null) {
           widget.onTapDown!();
@@ -167,20 +167,20 @@ class _PipFlutterPlayerMaterialVideoProgressBarState
         final Duration position = controller!.value.duration! * relative;
         lastSeek = position;
         await pipFlutterPlayerController!.seekTo(position);
-        onFinishedLastSeek();
+        await onFinishedLastSeek();
         if (relative >= 1) {
           lastSeek = controller!.value.duration;
           await pipFlutterPlayerController!.seekTo(controller!.value.duration!);
-          onFinishedLastSeek();
+          await onFinishedLastSeek();
         }
       }
     }
   }
 
-  void onFinishedLastSeek() {
+  Future<void> onFinishedLastSeek() async {
     if (shouldPlayAfterDragEnd) {
       shouldPlayAfterDragEnd = false;
-      pipFlutterPlayerController?.play();
+      await pipFlutterPlayerController?.play();
     }
   }
 }

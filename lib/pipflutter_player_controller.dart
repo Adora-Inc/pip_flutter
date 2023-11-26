@@ -1100,14 +1100,17 @@ class PipFlutterPlayerController {
         return;
       }
       if (Platform.isIOS) {
-        final RenderBox? renderBox = pipFlutterPlayerGlobalKey.currentContext!
-            .findRenderObject() as RenderBox?;
+        final context = pipFlutterPlayerGlobalKey.currentContext!;
+        if (!context.mounted) {
+          throw Exception('Context is not mounted');
+        }
+        final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
         if (renderBox == null) {
-          PipFlutterPlayerUtils.log(
+          throw Exception(
               "Can't show PiP. RenderBox is null. Did you provide valid global"
               " key?");
-          return;
         }
+
         final Offset position = renderBox.localToGlobal(Offset.zero);
         return videoPlayerController?.enablePictureInPicture(
           left: position.dx,
@@ -1155,6 +1158,10 @@ class PipFlutterPlayerController {
   ///Handle VideoEvent when remote controls notification / PiP is shown
   Future<void> _handleVideoEvent(VideoEvent event) async {
     switch (event.eventType) {
+      case VideoEventType.initialized:
+        _postEvent(
+            PipFlutterPlayerEvent(PipFlutterPlayerEventType.initialized));
+        break;
       case VideoEventType.play:
         _postEvent(PipFlutterPlayerEvent(PipFlutterPlayerEventType.play));
         break;
@@ -1191,10 +1198,12 @@ class PipFlutterPlayerController {
         _postEvent(
             PipFlutterPlayerEvent(PipFlutterPlayerEventType.bufferingEnd));
         break;
-      default:
-
-        ///TODO: Handle when needed
-        break;
+      case VideoEventType.pipStart:
+        _postEvent(PipFlutterPlayerEvent(PipFlutterPlayerEventType.pipStart));
+      case VideoEventType.pipStop:
+        _postEvent(PipFlutterPlayerEvent(PipFlutterPlayerEventType.pipStop));
+      case VideoEventType.unknown:
+        _postEvent(PipFlutterPlayerEvent(PipFlutterPlayerEventType.unknown));
     }
   }
 
