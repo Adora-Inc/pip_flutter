@@ -408,15 +408,14 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   @override
-  Future<void> dispose() async {
-    await _creatingCompleter.future;
+  void dispose() {
     if (!_isDisposed) {
       _isDisposed = true;
       value = VideoPlayerValue.uninitialized();
       _timer?.cancel();
-      await _eventSubscription?.cancel();
-      await _videoPlayerPlatform.dispose(_textureId);
-      await videoEventStreamController.close();
+      unawaited(_eventSubscription?.cancel());
+      _videoPlayerPlatform.dispose(_textureId);
+      unawaited(videoEventStreamController.close());
     }
     _isDisposed = true;
     super.dispose();
@@ -752,19 +751,19 @@ class _VideoScrubberState extends State<_VideoScrubber> {
 
   VideoPlayerController get controller => widget.controller;
 
+  Future<void> seekToRelativePosition(Offset globalPosition) async {
+    final RenderObject? renderObject = context.findRenderObject();
+    if (renderObject != null) {
+      final RenderBox box = renderObject as RenderBox;
+      final Offset tapPos = box.globalToLocal(globalPosition);
+      final double relative = tapPos.dx / box.size.width;
+      final Duration position = controller.value.duration! * relative;
+      await controller.seekTo(position);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    Future<void> seekToRelativePosition(Offset globalPosition) async {
-      final RenderObject? renderObject = context.findRenderObject();
-      if (renderObject != null) {
-        final RenderBox box = renderObject as RenderBox;
-        final Offset tapPos = box.globalToLocal(globalPosition);
-        final double relative = tapPos.dx / box.size.width;
-        final Duration position = controller.value.duration! * relative;
-        await controller.seekTo(position);
-      }
-    }
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onHorizontalDragStart: (DragStartDetails details) async {

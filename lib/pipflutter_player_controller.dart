@@ -1311,28 +1311,28 @@ class PipFlutterPlayerController {
   ///Dispose PipFlutterPlayerController. When [forceDispose] parameter is true, then
   ///autoDispose parameter will be overridden and controller will be disposed
   ///(if it wasn't disposed before).
-  Future<void> dispose({bool forceDispose = false}) async {
+  void dispose({bool forceDispose = false}) {
     if (!pipFlutterPlayerConfiguration.autoDispose && !forceDispose) {
       return;
     }
     if (!_disposed) {
       if (videoPlayerController != null) {
-        await pause();
+        unawaited(pause());
         videoPlayerController!.removeListener(_onFullScreenStateChanged);
         videoPlayerController!.removeListener(_onVideoPlayerChanged);
-        await videoPlayerController!.dispose();
+        videoPlayerController!.dispose();
       }
       _eventListeners.clear();
       _nextVideoTimer?.cancel();
-      await _nextVideoTimeStreamController.close();
-      await _controlsVisibilityStreamController.close();
-      await _videoEventStreamSubscription?.cancel();
+      unawaited(_nextVideoTimeStreamController.close());
+      unawaited(_controlsVisibilityStreamController.close());
+      unawaited(_videoEventStreamSubscription?.cancel());
       _disposed = true;
-      await _controllerEventStreamController.close();
+      unawaited(_controllerEventStreamController.close());
 
       ///Delete files async
       for (var file in _tempFiles) {
-        await file.delete();
+        unawaited(file.delete());
       }
     }
   }

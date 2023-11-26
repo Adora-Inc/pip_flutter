@@ -119,8 +119,8 @@ class _PipFlutterPlayerMaterialControlsState
   }
 
   @override
-  Future<void> dispose() async {
-    await _dispose();
+  void dispose() {
+    unawaited(_dispose());
     super.dispose();
   }
 
@@ -133,15 +133,15 @@ class _PipFlutterPlayerMaterialControlsState
   }
 
   @override
-  Future<void> didChangeDependencies() async {
+  void didChangeDependencies() {
     final oldController = _pipFlutterPlayerController;
     _pipFlutterPlayerController = PipFlutterPlayerController.of(context);
     _controller = _pipFlutterPlayerController!.videoPlayerController;
     _latestValue = _controller!.value;
 
     if (oldController != _pipFlutterPlayerController) {
-      await _dispose();
-      await _initialize();
+      unawaited(_dispose());
+      unawaited(_initialize());
     }
 
     super.didChangeDependencies();

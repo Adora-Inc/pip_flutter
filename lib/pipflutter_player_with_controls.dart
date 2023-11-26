@@ -47,9 +47,9 @@ class _PipFlutterPlayerWithControlsState
   }
 
   @override
-  Future<void> didUpdateWidget(PipFlutterPlayerWithControls oldWidget) async {
+  void didUpdateWidget(PipFlutterPlayerWithControls oldWidget) {
     if (oldWidget.controller != widget.controller) {
-      await _controllerEventSubscription?.cancel();
+      unawaited(_controllerEventSubscription?.cancel());
       _controllerEventSubscription =
           widget.controller!.controllerEventStream.listen(_onControllerChanged);
     }

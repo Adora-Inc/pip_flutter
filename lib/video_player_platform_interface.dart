@@ -1,8 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:pip_flutter/pipflutter_player_buffering_configuration.dart';
 import 'package:pip_flutter/method_channel_video_player.dart';
+import 'package:pip_flutter/pipflutter_player_buffering_configuration.dart';
 
 /// The interface that implementations of video_player must implement.
 ///
@@ -54,7 +55,7 @@ abstract class VideoPlayerPlatform {
   }
 
   /// Clears one video.
-  Future<void> dispose(int? textureId) {
+  void dispose(int? textureId) {
     throw UnimplementedError('dispose() has not been implemented.');
   }
 
