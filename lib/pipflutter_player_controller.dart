@@ -1078,7 +1078,7 @@ class PipFlutterPlayerController {
   ///Enable Picture in Picture (PiP) mode. [pipFlutterPlayerGlobalKey] is required
   ///to open PiP mode in iOS. When device is not supported, PiP mode won't be
   ///open.
-  Future<void>? enablePictureInPicture(
+  Future<bool> enablePictureInPicture(
       GlobalKey pipFlutterPlayerGlobalKey) async {
     if (videoPlayerController == null) {
       throw StateError("The data source has not been initialized");
@@ -1093,11 +1093,11 @@ class PipFlutterPlayerController {
       setControlsEnabled(false);
       if (Platform.isAndroid) {
         _wasInFullScreenBeforePiP = _isFullScreen;
-        await videoPlayerController?.enablePictureInPicture(
-            left: 0, top: 0, width: 0, height: 0);
+        final bool? result = await videoPlayerController
+            ?.enablePictureInPicture(left: 0, top: 0, width: 0, height: 0);
         enterFullScreen();
         _postEvent(PipFlutterPlayerEvent(PipFlutterPlayerEventType.pipStart));
-        return;
+        return result!;
       }
       if (Platform.isIOS) {
         final context = pipFlutterPlayerGlobalKey.currentContext!;
@@ -1112,20 +1112,24 @@ class PipFlutterPlayerController {
         }
 
         final Offset position = renderBox.localToGlobal(Offset.zero);
-        return videoPlayerController?.enablePictureInPicture(
+        final result = await videoPlayerController?.enablePictureInPicture(
           left: position.dx,
           top: position.dy,
           width: renderBox.size.width,
           height: renderBox.size.height,
         );
+        return result!;
+        ////594
       } else {
         PipFlutterPlayerUtils.log("Unsupported PiP in current platform.");
+        return false;
       }
     } else {
       PipFlutterPlayerUtils.log(
           "Picture in picture is not supported in this device. If you're "
           "using Android, please check if you're using activity v2 "
           "embedding.");
+      return false;
     }
   }
 

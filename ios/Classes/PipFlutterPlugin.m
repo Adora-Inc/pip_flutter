@@ -402,13 +402,13 @@ bool _remoteCommandsInitialized = false;
 
             [player enablePictureInPicture:CGRectMake(left, top, width, height) completion:^(BOOL success, NSError *error) {
                 if (success) {
-                    result(nil); // or result(@(YES));
+                    NSLog(@"PIP Started Successfully!");
+                    result(@(YES));
                 } else {
                     NSLog(@"Error enabling PiP: %@", error);
                     result(error.localizedDescription); // or some error code
                 }
             }];
-
         } else if ([@"isPictureInPictureSupported" isEqualToString:call.method]){
             if (@available(iOS 9.0, *)){
                 if ([AVPictureInPictureController isPictureInPictureSupported]){

@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface PipFlutter : NSObject <FlutterPlatformView, FlutterStreamHandler, AVPictureInPictureControllerDelegate>
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) PipFlutterEzDrmAssetsLoaderDelegate* loaderDelegate;
+@property (nonatomic, copy) void (^completionHandler)(BOOL success, NSError *error);
 @property(nonatomic) FlutterEventChannel* eventChannel;
 @property(nonatomic) FlutterEventSink eventSink;
 @property(nonatomic) CGAffineTransform preferredTransform;

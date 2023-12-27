@@ -584,24 +584,16 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 - (void)setPictureInPicture:(BOOL)pictureInPicture completion:(void (^)(BOOL success, NSError *error))completion {
     if (@available(iOS 9.0, *)) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            BOOL success = YES;
-            NSError *operationError = nil;
+            self.completionHandler = completion; // Save the completion handler
 
-            if (_pipController && pictureInPicture && ![_pipController isPictureInPictureActive]) {
-                [_pipController startPictureInPicture];
-            } else if (_pipController && !pictureInPicture && [_pipController isPictureInPictureActive]) {
-                [_pipController stopPictureInPicture];
-            } else {
-                success = NO;
-                operationError = [NSError errorWithDomain:@"com.yourdomain.yourapp"
-                                                     code:1003
-                                                 userInfo:@{NSLocalizedDescriptionKey: @"Failed to set Picture in Picture"}];
-            }
+            if (_pipController) {
+                _pipController.delegate = self;
 
-            self._pictureInPicture = pictureInPicture;
-
-            if (completion) {
-                completion(success, operationError);
+                if (pictureInPicture && ![_pipController isPictureInPictureActive]) {
+                    [_pipController startPictureInPicture];
+                } else if (!pictureInPicture && [_pipController isPictureInPictureActive]) {
+                    [_pipController stopPictureInPicture];
+                }
             }
         });
     } else {
@@ -614,7 +606,13 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     }
 }
 
+#pragma mark - AVPictureInPictureControllerDelegate
 
+- (void)pictureInPictureControllerFailedToStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController withError:(NSError *)error {
+    if (self.completionHandler) {
+        self.completionHandler(NO, error);
+    }
+}
 
 #if TARGET_OS_IOS
 - (void)setRestoreUserInterfaceForPIPStopCompletionHandler:(BOOL)restore
@@ -721,11 +719,17 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 #if TARGET_OS_IOS
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
     [self disablePictureInPicture];
+    if (self.completionHandler) {
+        self.completionHandler(YES, nil);
+    }
 }
 
 - (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
     if (_eventSink != nil) {
         _eventSink(@{@"event" : @"pipStart"});
+    }
+    if (self.completionHandler) {
+        self.completionHandler(YES, nil);
     }
 }
 

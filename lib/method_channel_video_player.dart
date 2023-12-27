@@ -221,9 +221,9 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
-  Future<void> enablePictureInPicture(int? textureId, double? top, double? left,
+  Future<bool> enablePictureInPicture(int? textureId, double? top, double? left,
       double? width, double? height) async {
-    return _channel.invokeMethod<void>(
+    final result = await _channel.invokeMethod<bool>(
       'enablePictureInPicture',
       <String, dynamic>{
         'textureId': textureId,
@@ -233,6 +233,9 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
         'height': height,
       },
     );
+    debugPrint('PIPResult: $result');
+    return result!;
+    /////594
   }
 
   @override
