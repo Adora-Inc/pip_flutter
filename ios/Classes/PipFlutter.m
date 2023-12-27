@@ -581,22 +581,40 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     }
 }
 
-- (void)setPictureInPicture:(BOOL)pictureInPicture
-{
-    self._pictureInPicture = pictureInPicture;
+- (void)setPictureInPicture:(BOOL)pictureInPicture completion:(void (^)(BOOL success, NSError *error))completion {
     if (@available(iOS 9.0, *)) {
-        if (_pipController && self._pictureInPicture && ![_pipController isPictureInPictureActive]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            BOOL success = YES;
+            NSError *operationError = nil;
+
+            if (_pipController && pictureInPicture && ![_pipController isPictureInPictureActive]) {
                 [_pipController startPictureInPicture];
-            });
-        } else if (_pipController && !self._pictureInPicture && [_pipController isPictureInPictureActive]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+            } else if (_pipController && !pictureInPicture && [_pipController isPictureInPictureActive]) {
                 [_pipController stopPictureInPicture];
-            });
-        } else {
-            // Fallback on earlier versions
-        } }
+            } else {
+                success = NO;
+                operationError = [NSError errorWithDomain:@"com.yourdomain.yourapp"
+                                                     code:1003
+                                                 userInfo:@{NSLocalizedDescriptionKey: @"Failed to set Picture in Picture"}];
+            }
+
+            self._pictureInPicture = pictureInPicture;
+
+            if (completion) {
+                completion(success, operationError);
+            }
+        });
+    } else {
+        if (completion) {
+            NSError *versionError = [NSError errorWithDomain:@"com.yourdomain.yourapp"
+                                                        code:1004
+                                                    userInfo:@{NSLocalizedDescriptionKey: @"iOS version not supported for Picture in Picture"}];
+            completion(NO, versionError);
+        }
+    }
 }
+
+
 
 #if TARGET_OS_IOS
 - (void)setRestoreUserInterfaceForPIPStopCompletionHandler:(BOOL)restore
@@ -659,15 +677,21 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
             _pipController = NULL;
         }
         [self setupPipController];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            [self setPictureInPicture:true];
-            if(completion) {
-                completion(YES);
-            }
+
+        // Directly call setPictureInPicture:completion: on the main queue
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setPictureInPicture:true completion:^(BOOL success, NSError *error) {
+                if (!success) {
+                    NSLog(@"Error setting Picture in Picture: %@", error);
+                    // Handle the error
+                }
+                if (completion) {
+                    completion(success);
+                }
+            }];
         });
     } else {
-        if(completion) {
+        if (completion) {
             completion(NO);
         }
     }
@@ -675,16 +699,22 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 
 
 
-- (void)disablePictureInPicture
-{
-    [self setPictureInPicture:true];
-    if (__playerLayer){
-        [self._playerLayer removeFromSuperlayer];
-        self._playerLayer = nil;
-        if (_eventSink != nil) {
-            _eventSink(@{@"event" : @"pipStop"});
+
+- (void)disablePictureInPicture {
+    [self setPictureInPicture:false completion:^(BOOL success, NSError *error) {
+        if (!success) {
+            NSLog(@"Error setting Picture in Picture: %@", error);
+            // Handle the error
+        } else {
+            if (self._playerLayer) {
+                [self._playerLayer removeFromSuperlayer];
+                self._playerLayer = nil;
+                if (self->_eventSink != nil) {
+                    self->_eventSink(@{@"event" : @"pipStop"});
+                }
+            }
         }
-    }
+    }];
 }
 #endif
 
@@ -780,9 +810,17 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     [self pause];
     [self disposeSansEventChannel];
     [_eventChannel setStreamHandler:nil];
-    [self disablePictureInPicture];
-    [self setPictureInPicture:false];
+
+    // Asynchronously disable Picture in Picture
+    [self setPictureInPicture:false completion:^(BOOL success, NSError *error) {
+        if (!success) {
+            NSLog(@"Error setting Picture in Picture: %@", error);
+            // Handle the error
+        }
+    }];
+
     _disposed = true;
 }
+
 
 @end

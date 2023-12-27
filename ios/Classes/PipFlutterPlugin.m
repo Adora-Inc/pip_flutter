@@ -420,8 +420,17 @@ bool _remoteCommandsInitialized = false;
             result([NSNumber numberWithBool:false]);
         } else if ([@"disablePictureInPicture" isEqualToString:call.method]){
             [player disablePictureInPicture];
-            [player setPictureInPicture:false];
-            result(nil);
+
+            // Asynchronously set Picture in Picture to false
+            [player setPictureInPicture:false completion:^(BOOL success, NSError *error) {
+                if (!success) {
+                    NSLog(@"Error setting Picture in Picture: %@", error);
+                    // Handle the error
+                    result(error.localizedDescription); // Return the error description in the result
+                } else {
+                    result(nil); // Return success in the result
+                }
+            }];
         } else if ([@"setAudioTrack" isEqualToString:call.method]){
             NSString* name = argsMap[@"name"];
             int index = [argsMap[@"index"] intValue];
