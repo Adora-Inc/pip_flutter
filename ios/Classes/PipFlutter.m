@@ -620,23 +620,41 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     }
 }
 
-- (void) enablePictureInPicture: (CGRect) frame{
+- (void)enablePictureInPicture:(CGRect)frame completion:(void (^)(BOOL success, NSError *error))completion {
+    // Disable current PiP if it's already enabled
     [self disablePictureInPicture];
-    [self usePlayerLayer:frame];
+
+    // Attempt to use the player layer with the specified frame
+    [self usePlayerLayer:frame completion:^(BOOL success) {
+        if (!success) {
+            // If usePlayerLayer fails, create and return an error
+            NSError *enableError = [NSError errorWithDomain:@"jp.smartbooks.kodomamo"
+                                                       code:1001
+                                                   userInfo:@{NSLocalizedDescriptionKey: @"Failed to enable Picture in Picture"}];
+            if (completion) {
+                completion(NO, enableError);
+            }
+        } else {
+            // If everything is successful
+            if (completion) {
+                completion(YES, nil);
+            }
+        }
+    }];
 }
 
-- (void)usePlayerLayer: (CGRect) frame
-{
-    if( _player )
-    {
+
+
+- (void)usePlayerLayer:(CGRect)frame completion:(void (^)(BOOL success))completion {
+    if (_player) {
         // Create new controller passing reference to the AVPlayerLayer
         self._playerLayer = [AVPlayerLayer playerLayerWithPlayer:_player];
         UIViewController* vc = [[[UIApplication sharedApplication] keyWindow] rootViewController];
         self._playerLayer.frame = frame;
         self._playerLayer.needsDisplayOnBoundsChange = YES;
-        //  [self._playerLayer addObserver:self forKeyPath:readyForDisplayKeyPath options:NSKeyValueObservingOptionNew context:nil];
         [vc.view.layer addSublayer:self._playerLayer];
         vc.view.layer.needsDisplayOnBoundsChange = YES;
+
         if (@available(iOS 9.0, *)) {
             _pipController = NULL;
         }
@@ -644,9 +662,18 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{
             [self setPictureInPicture:true];
+            if(completion) {
+                completion(YES);
+            }
         });
+    } else {
+        if(completion) {
+            completion(NO);
+        }
     }
 }
+
+
 
 - (void)disablePictureInPicture
 {

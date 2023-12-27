@@ -1,4 +1,3 @@
-
 #import "PipFlutterPlugin.h"
 #import <pip_flutter/pip_flutter-Swift.h>
 
@@ -400,8 +399,16 @@ bool _remoteCommandsInitialized = false;
             double top = [argsMap[@"top"] doubleValue];
             double width = [argsMap[@"width"] doubleValue];
             double height = [argsMap[@"height"] doubleValue];
-            [player enablePictureInPicture:CGRectMake(left, top, width, height)];
-            result(nil);
+
+            [player enablePictureInPicture:CGRectMake(left, top, width, height) completion:^(BOOL success, NSError *error) {
+                if (success) {
+                    result(nil); // or result(@(YES));
+                } else {
+                    NSLog(@"Error enabling PiP: %@", error);
+                    result(error.localizedDescription); // or some error code
+                }
+            }];
+
         } else if ([@"isPictureInPictureSupported" isEqualToString:call.method]){
             if (@available(iOS 9.0, *)){
                 if ([AVPictureInPictureController isPictureInPictureSupported]){
