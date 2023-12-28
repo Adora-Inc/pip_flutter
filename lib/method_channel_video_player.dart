@@ -223,19 +223,32 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
   @override
   Future<bool> enablePictureInPicture(int? textureId, double? top, double? left,
       double? width, double? height) async {
-    final result = await _channel.invokeMethod<bool>(
-      'enablePictureInPicture',
-      <String, dynamic>{
-        'textureId': textureId,
-        'top': top,
-        'left': left,
-        'width': width,
-        'height': height,
-      },
-    );
-    debugPrint('PIPResult: $result');
-    return result!;
-    /////594
+    const Duration timeoutDuration = Duration(seconds: 2);
+    const int maxRetries = 5;
+
+    for (int currentRetry = 0; currentRetry < maxRetries; currentRetry++) {
+      {
+        final methodCallFuture = _channel.invokeMethod<bool>(
+          'enablePictureInPicture',
+          <String, dynamic>{
+            'textureId': textureId,
+            'top': top,
+            'left': left,
+            'width': width,
+            'height': height,
+          },
+        );
+
+        final timeoutFuture = Future.delayed(timeoutDuration, () => false);
+
+        final result = await Future.any([methodCallFuture, timeoutFuture]);
+
+        if (result == true) {
+          return true;
+        }
+      }
+    }
+    throw Exception('Failed to enable Picture in Picture');
   }
 
   @override
