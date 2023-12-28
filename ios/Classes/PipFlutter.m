@@ -719,9 +719,9 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 #if TARGET_OS_IOS
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
     [self disablePictureInPicture];
-    if (self.completionHandler) {
-        self.completionHandler(YES, nil);
-    }
+    if (_eventSink != nil) {
+            _eventSink(@{@"event" : @"didStopPiP"});
+        }
 }
 
 - (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
@@ -733,16 +733,26 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     }
 }
 
-- (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
-
+- (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController {
+    if (_eventSink != nil) {
+        _eventSink(@{@"event" : @"willStopPiP"});
+    }
 }
 
 - (void)pictureInPictureControllerWillStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController {
-
+    if (_eventSink != nil) {
+        _eventSink(@{@"event" : @"willStartPiP"});
+    }
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController failedToStartPictureInPictureWithError:(NSError *)error {
-
+    if (_eventSink != nil) {
+        _eventSink(@{@"event" : @"failedToStartPiP", @"error" : error.localizedDescription});
+    }
+    if (self.completionHandler) {
+        self.completionHandler(NO, error);
+    }
+    // Additional error handling code
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL))completionHandler {
