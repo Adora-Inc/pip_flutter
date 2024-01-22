@@ -598,7 +598,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
         });
     } else {
         if (completion) {
-            NSError *versionError = [NSError errorWithDomain:@"com.yourdomain.yourapp"
+            NSError *versionError = [NSError errorWithDomain:@"jp.smartbooks.kodomamo"
                                                         code:1004
                                                     userInfo:@{NSLocalizedDescriptionKey: @"iOS version not supported for Picture in Picture"}];
             completion(NO, versionError);
@@ -752,7 +752,6 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     if (self.completionHandler) {
         self.completionHandler(NO, error);
     }
-    // Additional error handling code
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL))completionHandler {
