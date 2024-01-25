@@ -244,12 +244,12 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
 
         final result = await Future.any([methodCallFuture, timeoutFuture]);
 
-        if (result == true) {
-          return true;
+        if (result != true) {
+          throw Exception('Failed to enable Picture in Picture');
         }
       }
     }
-    throw Exception('Failed to enable Picture in Picture');
+    return true;
   }
 
   @override

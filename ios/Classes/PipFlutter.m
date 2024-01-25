@@ -598,7 +598,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
         });
     } else {
         if (completion) {
-            NSError *versionError = [NSError errorWithDomain:@"jp.smartbooks.kodomamo"
+            NSError *versionError = [NSError errorWithDomain:@"jp.smartbooks.kodomamo.parentapp"
                                                         code:1004
                                                     userInfo:@{NSLocalizedDescriptionKey: @"iOS version not supported for Picture in Picture"}];
             completion(NO, versionError);
@@ -644,7 +644,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     [self usePlayerLayer:frame completion:^(BOOL success) {
         if (!success) {
             // If usePlayerLayer fails, create and return an error
-            NSError *enableError = [NSError errorWithDomain:@"jp.smartbooks.kodomamo"
+            NSError *enableError = [NSError errorWithDomain:@"jp.smartbooks.kodomamo.parentapp"
                                                        code:1001
                                                    userInfo:@{NSLocalizedDescriptionKey: @"Failed to enable Picture in Picture"}];
             if (completion) {
