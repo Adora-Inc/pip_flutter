@@ -224,8 +224,12 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
   Future<bool> enablePictureInPicture(int? textureId, double? top, double? left,
       double? width, double? height, int? timeoutInMs) async {
     /// This serves as a warmup for the player to be ready to enter PIP mode
-    await _enablePIPHelper(
-        textureId, top, left, width, height, const Duration(milliseconds: 100));
+    /// If this suceeds, we return immediately, else, we try two more times
+    final bool didLaunch = await _enablePIPHelper(
+        textureId, top, left, width, height, const Duration(milliseconds: 500));
+    if (didLaunch) {
+      return true;
+    }
 
     /// We try to launch PIP mode twice and throw an exception if it fails
     final Duration timeoutDuration =
@@ -233,14 +237,15 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
     const int maxRetries = 2;
     for (int currentRetry = 0; currentRetry < maxRetries; currentRetry++) {
       {
-        await _enablePIPHelper(
+        final bool didLaunch = await _enablePIPHelper(
             textureId, top, left, width, height, timeoutDuration);
+        if (didLaunch) return true;
       }
     }
-    return true;
+    throw Exception('Failed to enable Picture in Picture');
   }
 
-  Future<void> _enablePIPHelper(int? textureId, double? top, double? left,
+  Future<bool> _enablePIPHelper(int? textureId, double? top, double? left,
       double? width, double? height, Duration timeoutDuration) async {
     final methodCallFuture = _channel.invokeMethod<bool>(
       'enablePictureInPicture',
@@ -258,8 +263,9 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
     final result = await Future.any([methodCallFuture, timeoutFuture]);
 
     if (result != true) {
-      throw Exception('Failed to enable Picture in Picture');
+      return false;
     }
+    return true;
   }
 
   @override
