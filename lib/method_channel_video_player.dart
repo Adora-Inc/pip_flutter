@@ -223,33 +223,43 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
   @override
   Future<bool> enablePictureInPicture(int? textureId, double? top, double? left,
       double? width, double? height, int? timeoutInMs) async {
+    /// This serves as a warmup for the player to be ready to enter PIP mode
+    await _enablePIPHelper(
+        textureId, top, left, width, height, const Duration(milliseconds: 100));
+
+    /// We try to launch PIP mode twice and throw an exception if it fails
     final Duration timeoutDuration =
         Duration(milliseconds: timeoutInMs ?? 2000);
-    const int maxRetries = 3;
-
+    const int maxRetries = 2;
     for (int currentRetry = 0; currentRetry < maxRetries; currentRetry++) {
       {
-        final methodCallFuture = _channel.invokeMethod<bool>(
-          'enablePictureInPicture',
-          <String, dynamic>{
-            'textureId': textureId,
-            'top': top,
-            'left': left,
-            'width': width,
-            'height': height,
-          },
-        );
-
-        final timeoutFuture = Future.delayed(timeoutDuration, () => false);
-
-        final result = await Future.any([methodCallFuture, timeoutFuture]);
-
-        if (result != true) {
-          throw Exception('Failed to enable Picture in Picture');
-        }
+        await _enablePIPHelper(
+            textureId, top, left, width, height, timeoutDuration);
       }
     }
     return true;
+  }
+
+  Future<void> _enablePIPHelper(int? textureId, double? top, double? left,
+      double? width, double? height, Duration timeoutDuration) async {
+    final methodCallFuture = _channel.invokeMethod<bool>(
+      'enablePictureInPicture',
+      <String, dynamic>{
+        'textureId': textureId,
+        'top': top,
+        'left': left,
+        'width': width,
+        'height': height,
+      },
+    );
+
+    final timeoutFuture = Future.delayed(timeoutDuration, () => false);
+
+    final result = await Future.any([methodCallFuture, timeoutFuture]);
+
+    if (result != true) {
+      throw Exception('Failed to enable Picture in Picture');
+    }
   }
 
   @override
