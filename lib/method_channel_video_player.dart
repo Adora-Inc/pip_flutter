@@ -222,8 +222,9 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
 
   @override
   Future<bool> enablePictureInPicture(int? textureId, double? top, double? left,
-      double? width, double? height) async {
-    const Duration timeoutDuration = Duration(seconds: 2);
+      double? width, double? height, int? timeoutInMs) async {
+    final Duration timeoutDuration =
+        Duration(milliseconds: timeoutInMs ?? 2000);
     const int maxRetries = 3;
 
     for (int currentRetry = 0; currentRetry < maxRetries; currentRetry++) {

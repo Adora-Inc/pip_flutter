@@ -586,9 +586,13 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   Future<bool> enablePictureInPicture(
-      {double? top, double? left, double? width, double? height}) async {
+      {double? top,
+      double? left,
+      double? width,
+      double? height,
+      int? timeoutInMs}) async {
     return _videoPlayerPlatform.enablePictureInPicture(
-        textureId, top, left, width, height);
+        textureId, top, left, width, height, timeoutInMs);
   }
 
   Future<void> disablePictureInPicture() async {

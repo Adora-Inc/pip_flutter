@@ -1078,8 +1078,8 @@ class PipFlutterPlayerController {
   ///Enable Picture in Picture (PiP) mode. [pipFlutterPlayerGlobalKey] is required
   ///to open PiP mode in iOS. When device is not supported, PiP mode won't be
   ///open.
-  Future<bool> enablePictureInPicture(
-      GlobalKey pipFlutterPlayerGlobalKey) async {
+  Future<bool> enablePictureInPicture(GlobalKey pipFlutterPlayerGlobalKey,
+      {int? timeoutInMs}) async {
     if (videoPlayerController == null) {
       throw StateError("The data source has not been initialized");
     }
@@ -1112,14 +1112,14 @@ class PipFlutterPlayerController {
         }
 
         final Offset position = renderBox.localToGlobal(Offset.zero);
-        final result = await videoPlayerController?.enablePictureInPicture(
+        final result = await videoPlayerController!.enablePictureInPicture(
           left: position.dx,
           top: position.dy,
           width: renderBox.size.width,
           height: renderBox.size.height,
+          timeoutInMs: timeoutInMs,
         );
-        return result!;
-        ////594
+        return result;
       } else {
         PipFlutterPlayerUtils.log("Unsupported PiP in current platform.");
         return false;
