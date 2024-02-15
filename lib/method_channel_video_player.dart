@@ -223,18 +223,23 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
   @override
   Future<bool> enablePictureInPicture(int? textureId, double? top, double? left,
       double? width, double? height, int? timeoutInMs) async {
+    /// Params tuned manually
+    const Duration warmUpDuration = Duration(milliseconds: 1000);
+    const int maxRetries = 1;
+    const int defaultTimeoutInMs = 2000;
+
     /// This serves as a warmup for the player to be ready to enter PIP mode
-    /// If this suceeds, we return immediately, else, we try two more times
+    /// If this suceeds, we return immediately, else, we try again
     final bool didLaunch = await _enablePIPHelper(
-        textureId, top, left, width, height, const Duration(milliseconds: 500));
+        textureId, top, left, width, height, warmUpDuration);
     if (didLaunch) {
       return true;
     }
 
     /// We try to launch PIP mode twice and throw an exception if it fails
     final Duration timeoutDuration =
-        Duration(milliseconds: timeoutInMs ?? 2000);
-    const int maxRetries = 2;
+        Duration(milliseconds: timeoutInMs ?? defaultTimeoutInMs);
+
     for (int currentRetry = 0; currentRetry < maxRetries; currentRetry++) {
       {
         final bool didLaunch = await _enablePIPHelper(
