@@ -1,4 +1,4 @@
-import 'util.dart';
+import 'package:pip_flutter/util.dart';
 
 class MimeTypes {
   static const String baseTypeVideo = 'video';

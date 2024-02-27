@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:pip_flutter/pipflutter_player_controller.dart';
@@ -14,15 +15,15 @@ class PipFlutterPlayerSubtitlesDrawer extends StatefulWidget {
   final Stream<bool> playerVisibilityStream;
 
   const PipFlutterPlayerSubtitlesDrawer({
-    Key? key,
+    super.key,
     required this.subtitles,
     required this.pipFlutterPlayerController,
     this.pipFlutterPlayerSubtitlesConfiguration,
     required this.playerVisibilityStream,
-  }) : super(key: key);
+  });
 
   @override
-  _PipFlutterPlayerSubtitlesDrawerState createState() =>
+  State<PipFlutterPlayerSubtitlesDrawer> createState() =>
       _PipFlutterPlayerSubtitlesDrawerState();
 }
 
@@ -79,7 +80,7 @@ class _PipFlutterPlayerSubtitlesDrawerState
   void dispose() {
     widget.pipFlutterPlayerController.videoPlayerController!
         .removeListener(_updateState);
-    _visibilityStreamSubscription.cancel();
+    unawaited(_visibilityStreamSubscription.cancel());
     super.dispose();
   }
 

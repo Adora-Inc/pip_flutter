@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pip_flutter/pipflutter_player_buffering_configuration.dart';
@@ -171,7 +172,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     bool autoCreate = true,
   }) : super(VideoPlayerValue(duration: null)) {
     if (autoCreate) {
-      _create();
+      unawaited(_create());
     }
   }
 
@@ -203,7 +204,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     unawaited(_applyLooping());
     unawaited(_applyVolume());
 
-    void eventListener(VideoEvent event) {
+    Future<void> eventListener(VideoEvent event) async {
       if (_isDisposed) {
         return;
       }
@@ -215,7 +216,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
             size: event.size,
           );
           _initializingCompleter.complete(null);
-          _applyPlayPause();
+          await _applyPlayPause();
           break;
         case VideoEventType.completed:
           value = value.copyWith(isPlaying: false, position: value.duration);
@@ -234,13 +235,13 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           break;
 
         case VideoEventType.play:
-          play();
+          await play();
           break;
         case VideoEventType.pause:
-          pause();
+          await pause();
           break;
         case VideoEventType.seek:
-          seekTo(event.position);
+          await seekTo(event.position);
           break;
         case VideoEventType.pipStart:
           value = value.copyWith(isPip: true);
@@ -407,15 +408,14 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   @override
-  Future<void> dispose() async {
-    await _creatingCompleter.future;
+  void dispose() {
     if (!_isDisposed) {
       _isDisposed = true;
       value = VideoPlayerValue.uninitialized();
       _timer?.cancel();
-      await _eventSubscription?.cancel();
-      await _videoPlayerPlatform.dispose(_textureId);
-      videoEventStreamController.close();
+      unawaited(_eventSubscription?.cancel());
+      _videoPlayerPlatform.dispose(_textureId);
+      unawaited(videoEventStreamController.close());
     }
     _isDisposed = true;
     super.dispose();
@@ -546,9 +546,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _updatePosition(position);
 
     if (isPlaying) {
-      play();
+      await play();
     } else {
-      pause();
+      await pause();
     }
   }
 
@@ -585,10 +585,14 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         _textureId, width, height, bitrate);
   }
 
-  Future<void> enablePictureInPicture(
-      {double? top, double? left, double? width, double? height}) async {
-    await _videoPlayerPlatform.enablePictureInPicture(
-        textureId, top, left, width, height);
+  Future<bool> enablePictureInPicture(
+      {double? top,
+      double? left,
+      double? width,
+      double? height,
+      int? timeoutInMs}) async {
+    return _videoPlayerPlatform.enablePictureInPicture(
+        textureId, top, left, width, height, timeoutInMs);
   }
 
   Future<void> disablePictureInPicture() async {
@@ -613,12 +617,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     value = value.copyWith();
   }
 
-  void setAudioTrack(String? name, int? index) {
-    _videoPlayerPlatform.setAudioTrack(_textureId, name, index);
+  Future<void> setAudioTrack(String? name, int? index) async {
+    await _videoPlayerPlatform.setAudioTrack(_textureId, name, index);
   }
 
-  void setMixWithOthers(bool mixWithOthers) {
-    _videoPlayerPlatform.setMixWithOthers(_textureId, mixWithOthers);
+  Future<void> setMixWithOthers(bool mixWithOthers) async {
+    await _videoPlayerPlatform.setMixWithOthers(_textureId, mixWithOthers);
   }
 
   static Future clearCache() async {
@@ -637,14 +641,14 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 /// Widget that displays the video controlled by [controller].
 class VideoPlayer extends StatefulWidget {
   /// Uses the given [controller] for all video rendered in this widget.
-  const VideoPlayer(this.controller, {Key? key}) : super(key: key);
+  const VideoPlayer(this.controller, {super.key});
 
   /// The [VideoPlayerController] responsible for the video being rendered in
   /// this widget.
   final VideoPlayerController? controller;
 
   @override
-  _VideoPlayerState createState() => _VideoPlayerState();
+  State<VideoPlayer> createState() => _VideoPlayerState();
 }
 
 class _VideoPlayerState extends State<VideoPlayer> {
@@ -751,46 +755,46 @@ class _VideoScrubberState extends State<_VideoScrubber> {
 
   VideoPlayerController get controller => widget.controller;
 
+  Future<void> seekToRelativePosition(Offset globalPosition) async {
+    final RenderObject? renderObject = context.findRenderObject();
+    if (renderObject != null) {
+      final RenderBox box = renderObject as RenderBox;
+      final Offset tapPos = box.globalToLocal(globalPosition);
+      final double relative = tapPos.dx / box.size.width;
+      final Duration position = controller.value.duration! * relative;
+      await controller.seekTo(position);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    void seekToRelativePosition(Offset globalPosition) {
-      final RenderObject? renderObject = context.findRenderObject();
-      if (renderObject != null) {
-        final RenderBox box = renderObject as RenderBox;
-        final Offset tapPos = box.globalToLocal(globalPosition);
-        final double relative = tapPos.dx / box.size.width;
-        final Duration position = controller.value.duration! * relative;
-        controller.seekTo(position);
-      }
-    }
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onHorizontalDragStart: (DragStartDetails details) {
+      onHorizontalDragStart: (DragStartDetails details) async {
         if (!controller.value.initialized) {
           return;
         }
         _controllerWasPlaying = controller.value.isPlaying;
         if (_controllerWasPlaying) {
-          controller.pause();
+          await controller.pause();
         }
       },
-      onHorizontalDragUpdate: (DragUpdateDetails details) {
+      onHorizontalDragUpdate: (DragUpdateDetails details) async {
         if (!controller.value.initialized) {
           return;
         }
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
       },
-      onHorizontalDragEnd: (DragEndDetails details) {
+      onHorizontalDragEnd: (DragEndDetails details) async {
         if (_controllerWasPlaying) {
-          controller.play();
+          await controller.play();
         }
       },
-      onTapDown: (TapDownDetails details) {
+      onTapDown: (TapDownDetails details) async {
         if (!controller.value.initialized) {
           return;
         }
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
       },
       child: widget.child,
     );
@@ -816,9 +820,8 @@ class VideoProgressIndicator extends StatefulWidget {
     VideoProgressColors? colors,
     this.allowScrubbing,
     this.padding = const EdgeInsets.only(top: 5.0),
-    Key? key,
-  })  : colors = colors ?? VideoProgressColors(),
-        super(key: key);
+    super.key,
+  }) : colors = colors ?? VideoProgressColors();
 
   /// The [VideoPlayerController] that actually associates a video with this
   /// widget.
@@ -842,7 +845,7 @@ class VideoProgressIndicator extends StatefulWidget {
   final EdgeInsets padding;
 
   @override
-  _VideoProgressIndicatorState createState() => _VideoProgressIndicatorState();
+  State<VideoProgressIndicator> createState() => _VideoProgressIndicatorState();
 }
 
 class _VideoProgressIndicatorState extends State<VideoProgressIndicator> {
@@ -947,7 +950,7 @@ class ClosedCaption extends StatelessWidget {
   /// [VideoPlayerValue.caption].
   ///
   /// If [text] is null, nothing will be displayed.
-  const ClosedCaption({Key? key, this.text, this.textStyle}) : super(key: key);
+  const ClosedCaption({super.key, this.text, this.textStyle});
 
   /// The text that will be shown in the closed caption, or null if no caption
   /// should be shown.

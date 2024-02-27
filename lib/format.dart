@@ -1,6 +1,6 @@
-import 'drm_init_data.dart';
-import 'metadata.dart';
-import 'util.dart';
+import 'package:pip_flutter/drm_init_data.dart';
+import 'package:pip_flutter/metadata.dart';
+import 'package:pip_flutter/util.dart';
 
 /// Representation of a media format.
 class Format {

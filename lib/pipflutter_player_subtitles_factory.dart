@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:pip_flutter/pipflutter_player_subtitles_source.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
 
-import 'pipflutter_player_subtitle.dart';
-import 'pipflutter_player_subtitles_source_type.dart';
+import 'package:pip_flutter/pipflutter_player_subtitle.dart';
+import 'package:pip_flutter/pipflutter_player_subtitles_source_type.dart';
 
 class PipFlutterPlayerSubtitlesFactory {
   static Future<List<PipFlutterPlayerSubtitle>> parseSubtitles(

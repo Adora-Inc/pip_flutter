@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pip_flutter/pipflutter_player_configuration.dart';
@@ -12,12 +13,11 @@ import 'package:pip_flutter/pipflutter_player_event_type.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
 import 'package:pip_flutter/pipflutter_player_with_controls.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:wakelock/wakelock.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 ///Widget which uses provided controller to render video player.
 class PipFlutterPlayer extends StatefulWidget {
-  const PipFlutterPlayer({Key? key, required this.controller})
-      : super(key: key);
+  const PipFlutterPlayer({super.key, required this.controller});
 
   factory PipFlutterPlayer.network(
     String url, {
@@ -46,11 +46,8 @@ class PipFlutterPlayer extends StatefulWidget {
       );
 
   final PipFlutterPlayerController controller;
-
   @override
-  _PipFlutterPlayerState createState() {
-    return _PipFlutterPlayerState();
-  }
+  State<PipFlutterPlayer> createState() => _PipFlutterPlayerState();
 }
 
 class _PipFlutterPlayerState extends State<PipFlutterPlayer>
@@ -82,8 +79,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
       setState(() {
         _navigatorState = navigator;
       });
-      _setup();
-      _initialized = true;
+      unawaited(_setup().then((value) => _initialized = true));
     }
     super.didChangeDependencies();
   }
@@ -111,17 +107,17 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
     ///full screen is on, then full screen route must be pop and return to normal
     ///state.
     if (_isFullScreen) {
-      Wakelock.disable();
-      _navigatorState.maybePop();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+      unawaited(WakelockPlus.disable());
+      unawaited(_navigatorState.maybePop());
+      unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
           overlays:
-              _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen);
-      SystemChrome.setPreferredOrientations(
-          _pipFlutterPlayerConfiguration.deviceOrientationsAfterFullScreen);
+              _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen));
+      unawaited(SystemChrome.setPreferredOrientations(
+          _pipFlutterPlayerConfiguration.deviceOrientationsAfterFullScreen));
     }
 
     WidgetsBinding.instance.removeObserver(this);
-    _controllerEventSubscription?.cancel();
+    unawaited(_controllerEventSubscription?.cancel());
     widget.controller.dispose();
     VisibilityDetectorController.instance
         .forget(Key("${widget.controller.hashCode}_key"));
@@ -131,20 +127,20 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
   @override
   void didUpdateWidget(PipFlutterPlayer oldWidget) {
     if (oldWidget.controller != widget.controller) {
-      _controllerEventSubscription?.cancel();
+      unawaited(_controllerEventSubscription?.cancel());
       _controllerEventSubscription =
           widget.controller.controllerEventStream.listen(onControllerEvent);
     }
     super.didUpdateWidget(oldWidget);
   }
 
-  void onControllerEvent(PipFlutterPlayerControllerEvent event) {
+  Future<void> onControllerEvent(PipFlutterPlayerControllerEvent event) async {
     switch (event) {
       case PipFlutterPlayerControllerEvent.openFullscreen:
-        onFullScreenChanged();
+        await onFullScreenChanged();
         break;
       case PipFlutterPlayerControllerEvent.hideFullscreen:
-        onFullScreenChanged();
+        await onFullScreenChanged();
         break;
       default:
         setState(() {});
@@ -254,16 +250,17 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
     }
 
     if (!_pipFlutterPlayerConfiguration.allowedScreenSleep) {
-      Wakelock.enable();
+      unawaited(WakelockPlus.enable());
     }
-
-    await Navigator.of(context, rootNavigator: true).push(route);
+    if (context.mounted) {
+      await Navigator.of(context, rootNavigator: true).push(route);
+    }
     _isFullScreen = false;
     widget.controller.exitFullScreen();
 
     // The wakelock plugins checks whether it needs to perform an action internally,
     // so we do not need to check Wakelock.isEnabled.
-    Wakelock.disable();
+    unawaited(WakelockPlus.disable());
 
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen);
@@ -274,7 +271,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
   Widget _buildPlayer() {
     return VisibilityDetector(
       key: Key("${widget.controller.hashCode}_key"),
-      onVisibilityChanged: (VisibilityInfo info) =>
+      onVisibilityChanged: (VisibilityInfo info) async =>
           widget.controller.onPlayerVisibilityChanged(info.visibleFraction),
       child: PipFlutterPlayerWithControls(
         controller: widget.controller,
@@ -285,7 +282,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    widget.controller.setAppLifecycleState(state);
+    unawaited(widget.controller.setAppLifecycleState(state));
   }
 }
 
