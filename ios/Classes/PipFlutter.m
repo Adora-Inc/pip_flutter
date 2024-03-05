@@ -720,7 +720,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
     [self disablePictureInPicture];
     if (_eventSink != nil) {
-            _eventSink(@{@"event" : @"didStopPiP"});
+            _eventSink(@{@"event" : @"pipStop"});
         }
 }
 
@@ -734,6 +734,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 }
 
 - (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController {
+    [self.player pause];
     if (_eventSink != nil) {
         _eventSink(@{@"event" : @"willStopPiP"});
     }
