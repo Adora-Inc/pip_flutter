@@ -17,7 +17,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 ///Widget which uses provided controller to render video player.
 class PipFlutterPlayer extends StatefulWidget {
-  const PipFlutterPlayer({super.key, required this.controller});
+  const PipFlutterPlayer({Key? key, required this.controller}) : super(key: key);
 
   factory PipFlutterPlayer.network(
     String url, {
@@ -25,10 +25,9 @@ class PipFlutterPlayer extends StatefulWidget {
   }) =>
       PipFlutterPlayer(
         controller: PipFlutterPlayerController(
-          pipFlutterPlayerConfiguration ??
-              const PipFlutterPlayerConfiguration(),
-          pipFlutterPlayerDataSource: PipFlutterPlayerDataSource(
-              PipFlutterPlayerDataSourceType.network, url),
+          pipFlutterPlayerConfiguration ?? const PipFlutterPlayerConfiguration(),
+          pipFlutterPlayerDataSource:
+              PipFlutterPlayerDataSource(PipFlutterPlayerDataSourceType.network, url),
         ),
       );
 
@@ -38,10 +37,9 @@ class PipFlutterPlayer extends StatefulWidget {
   }) =>
       PipFlutterPlayer(
         controller: PipFlutterPlayerController(
-          pipFlutterPlayerConfiguration ??
-              const PipFlutterPlayerConfiguration(),
-          pipFlutterPlayerDataSource: PipFlutterPlayerDataSource(
-              PipFlutterPlayerDataSourceType.file, url),
+          pipFlutterPlayerConfiguration ?? const PipFlutterPlayerConfiguration(),
+          pipFlutterPlayerDataSource:
+              PipFlutterPlayerDataSource(PipFlutterPlayerDataSourceType.file, url),
         ),
       );
 
@@ -50,8 +48,7 @@ class PipFlutterPlayer extends StatefulWidget {
   State<PipFlutterPlayer> createState() => _PipFlutterPlayerState();
 }
 
-class _PipFlutterPlayerState extends State<PipFlutterPlayer>
-    with WidgetsBindingObserver {
+class _PipFlutterPlayerState extends State<PipFlutterPlayer> with WidgetsBindingObserver {
   PipFlutterPlayerConfiguration get _pipFlutterPlayerConfiguration =>
       widget.controller.pipFlutterPlayerConfiguration;
 
@@ -108,19 +105,17 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
     ///state.
     if (_isFullScreen) {
       unawaited(WakelockPlus.disable());
-      unawaited(_navigatorState.maybePop());
-      unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-          overlays:
-              _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen));
-      unawaited(SystemChrome.setPreferredOrientations(
-          _pipFlutterPlayerConfiguration.deviceOrientationsAfterFullScreen));
+      _navigatorState.maybePop();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+          overlays: _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen);
+      SystemChrome.setPreferredOrientations(
+          _pipFlutterPlayerConfiguration.deviceOrientationsAfterFullScreen);
     }
 
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_controllerEventSubscription?.cancel());
     widget.controller.dispose();
-    VisibilityDetectorController.instance
-        .forget(Key("${widget.controller.hashCode}_key"));
+    VisibilityDetectorController.instance.forget(Key("${widget.controller.hashCode}_key"));
     super.dispose();
   }
 
@@ -153,14 +148,12 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
     final controller = widget.controller;
     if (controller.isFullScreen && !_isFullScreen) {
       _isFullScreen = true;
-      controller.postEvent(
-          PipFlutterPlayerEvent(PipFlutterPlayerEventType.openFullscreen));
+      controller.postEvent(PipFlutterPlayerEvent(PipFlutterPlayerEventType.openFullscreen));
       await _pushFullScreenWidget(context);
     } else if (_isFullScreen) {
       Navigator.of(context, rootNavigator: true).pop();
       _isFullScreen = false;
-      controller.postEvent(
-          PipFlutterPlayerEvent(PipFlutterPlayerEventType.hideFullscreen));
+      controller.postEvent(PipFlutterPlayerEvent(PipFlutterPlayerEventType.hideFullscreen));
     }
   }
 
@@ -172,9 +165,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
     );
   }
 
-  Widget _buildFullScreenVideo(
-      BuildContext context,
-      Animation<double> animation,
+  Widget _buildFullScreenVideo(BuildContext context, Animation<double> animation,
       PipFlutterPlayerControllerProvider controllerProvider) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -186,11 +177,8 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
     );
   }
 
-  AnimatedWidget _defaultRoutePageBuilder(
-      BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      PipFlutterPlayerControllerProvider controllerProvider) {
+  AnimatedWidget _defaultRoutePageBuilder(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation, PipFlutterPlayerControllerProvider controllerProvider) {
     return AnimatedBuilder(
       animation: animation,
       builder: (BuildContext context, Widget? child) {
@@ -204,17 +192,15 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    final controllerProvider = PipFlutterPlayerControllerProvider(
-        controller: widget.controller, child: _buildPlayer());
+    final controllerProvider =
+        PipFlutterPlayerControllerProvider(controller: widget.controller, child: _buildPlayer());
 
     final routePageBuilder = _pipFlutterPlayerConfiguration.routePageBuilder;
     if (routePageBuilder == null) {
-      return _defaultRoutePageBuilder(
-          context, animation, secondaryAnimation, controllerProvider);
+      return _defaultRoutePageBuilder(context, animation, secondaryAnimation, controllerProvider);
     }
 
-    return routePageBuilder(
-        context, animation, secondaryAnimation, controllerProvider);
+    return routePageBuilder(context, animation, secondaryAnimation, controllerProvider);
   }
 
   Future<dynamic> _pushFullScreenWidget(BuildContext context) async {
@@ -225,32 +211,23 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
 
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    if (_pipFlutterPlayerConfiguration.autoDetectFullscreenDeviceOrientation ==
-        true) {
-      final aspectRatio =
-          widget.controller.videoPlayerController?.value.aspectRatio ?? 1.0;
+    if (_pipFlutterPlayerConfiguration.autoDetectFullscreenDeviceOrientation == true) {
+      final aspectRatio = widget.controller.videoPlayerController?.value.aspectRatio ?? 1.0;
       List<DeviceOrientation> deviceOrientations;
       if (aspectRatio < 1.0) {
-        deviceOrientations = [
-          DeviceOrientation.portraitUp,
-          DeviceOrientation.portraitDown
-        ];
+        deviceOrientations = [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown];
       } else {
-        deviceOrientations = [
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight
-        ];
+        deviceOrientations = [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight];
       }
       await SystemChrome.setPreferredOrientations(deviceOrientations);
     } else {
       await SystemChrome.setPreferredOrientations(
-        widget.controller.pipFlutterPlayerConfiguration
-            .deviceOrientationsOnFullScreen,
+        widget.controller.pipFlutterPlayerConfiguration.deviceOrientationsOnFullScreen,
       );
     }
 
     if (!_pipFlutterPlayerConfiguration.allowedScreenSleep) {
-      unawaited(WakelockPlus.enable());
+      WakelockPlus.enable();
     }
     if (context.mounted) {
       await Navigator.of(context, rootNavigator: true).push(route);
@@ -260,7 +237,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer>
 
     // The wakelock plugins checks whether it needs to perform an action internally,
     // so we do not need to check Wakelock.isEnabled.
-    unawaited(WakelockPlus.disable());
+    WakelockPlus.disable();
 
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen);
