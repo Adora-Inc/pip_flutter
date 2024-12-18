@@ -104,7 +104,7 @@ class _PipFlutterPlayerState extends State<PipFlutterPlayer> with WidgetsBinding
     ///full screen is on, then full screen route must be pop and return to normal
     ///state.
     if (_isFullScreen) {
-      Wakelock.disable();
+      unawaited(WakelockPlus.disable());
       _navigatorState.maybePop();
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
           overlays: _pipFlutterPlayerConfiguration.systemOverlaysAfterFullScreen);
