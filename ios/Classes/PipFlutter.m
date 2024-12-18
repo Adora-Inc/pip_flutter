@@ -581,21 +581,37 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     }
 }
 
-- (void)setPictureInPicture:(BOOL)pictureInPicture
-{
-    self._pictureInPicture = pictureInPicture;
+- (void)setPictureInPicture:(BOOL)pictureInPicture completion:(void (^)(BOOL success, NSError *error))completion {
     if (@available(iOS 9.0, *)) {
-        if (_pipController && self._pictureInPicture && ![_pipController isPictureInPictureActive]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [_pipController startPictureInPicture];
-            });
-        } else if (_pipController && !self._pictureInPicture && [_pipController isPictureInPictureActive]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [_pipController stopPictureInPicture];
-            });
-        } else {
-            // Fallback on earlier versions
-        } }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.completionHandler = completion; // Save the completion handler
+
+            if (_pipController) {
+                _pipController.delegate = self;
+
+                if (pictureInPicture && ![_pipController isPictureInPictureActive]) {
+                    [_pipController startPictureInPicture];
+                } else if (!pictureInPicture && [_pipController isPictureInPictureActive]) {
+                    [_pipController stopPictureInPicture];
+                }
+            }
+        });
+    } else {
+        if (completion) {
+            NSError *versionError = [NSError errorWithDomain:@"jp.smartbooks.kodomamo.parentapp"
+                                                        code:1004
+                                                    userInfo:@{NSLocalizedDescriptionKey: @"iOS version not supported for Picture in Picture"}];
+            completion(NO, versionError);
+        }
+    }
+}
+
+#pragma mark - AVPictureInPictureControllerDelegate
+
+- (void)pictureInPictureControllerFailedToStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController withError:(NSError *)error {
+    if (self.completionHandler) {
+        self.completionHandler(NO, error);
+    }
 }
 
 #if TARGET_OS_IOS
@@ -620,68 +636,123 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     }
 }
 
-- (void) enablePictureInPicture: (CGRect) frame{
+- (void)enablePictureInPicture:(CGRect)frame completion:(void (^)(BOOL success, NSError *error))completion {
+    // Disable current PiP if it's already enabled
     [self disablePictureInPicture];
-    [self usePlayerLayer:frame];
+
+    // Attempt to use the player layer with the specified frame
+    [self usePlayerLayer:frame completion:^(BOOL success) {
+        if (!success) {
+            // If usePlayerLayer fails, create and return an error
+            NSError *enableError = [NSError errorWithDomain:@"jp.smartbooks.kodomamo.parentapp"
+                                                       code:1001
+                                                   userInfo:@{NSLocalizedDescriptionKey: @"Failed to enable Picture in Picture"}];
+            if (completion) {
+                completion(NO, enableError);
+            }
+        } else {
+            // If everything is successful
+            if (completion) {
+                completion(YES, nil);
+            }
+        }
+    }];
 }
 
-- (void)usePlayerLayer: (CGRect) frame
-{
-    if( _player )
-    {
+
+
+- (void)usePlayerLayer:(CGRect)frame completion:(void (^)(BOOL success))completion {
+    if (_player) {
         // Create new controller passing reference to the AVPlayerLayer
         self._playerLayer = [AVPlayerLayer playerLayerWithPlayer:_player];
         UIViewController* vc = [[[UIApplication sharedApplication] keyWindow] rootViewController];
         self._playerLayer.frame = frame;
         self._playerLayer.needsDisplayOnBoundsChange = YES;
-        //  [self._playerLayer addObserver:self forKeyPath:readyForDisplayKeyPath options:NSKeyValueObservingOptionNew context:nil];
         [vc.view.layer addSublayer:self._playerLayer];
         vc.view.layer.needsDisplayOnBoundsChange = YES;
+
         if (@available(iOS 9.0, *)) {
             _pipController = NULL;
         }
         [self setupPipController];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            [self setPictureInPicture:true];
+
+        // Directly call setPictureInPicture:completion: on the main queue
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setPictureInPicture:true completion:^(BOOL success, NSError *error) {
+                if (!success) {
+                    NSLog(@"Error setting Picture in Picture: %@", error);
+                    // Handle the error
+                }
+                if (completion) {
+                    completion(success);
+                }
+            }];
         });
+    } else {
+        if (completion) {
+            completion(NO);
+        }
     }
 }
 
-- (void)disablePictureInPicture
-{
-    [self setPictureInPicture:true];
-    if (__playerLayer){
-        [self._playerLayer removeFromSuperlayer];
-        self._playerLayer = nil;
-        if (_eventSink != nil) {
-            _eventSink(@{@"event" : @"pipStop"});
+
+
+
+- (void)disablePictureInPicture {
+    [self setPictureInPicture:false completion:^(BOOL success, NSError *error) {
+        if (!success) {
+            NSLog(@"Error setting Picture in Picture: %@", error);
+            // Handle the error
+        } else {
+            if (self._playerLayer) {
+                [self._playerLayer removeFromSuperlayer];
+                self._playerLayer = nil;
+                if (self->_eventSink != nil) {
+                    self->_eventSink(@{@"event" : @"pipStop"});
+                }
+            }
         }
-    }
+    }];
 }
 #endif
 
 #if TARGET_OS_IOS
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
     [self disablePictureInPicture];
+    if (_eventSink != nil) {
+            _eventSink(@{@"event" : @"pipStop"});
+        }
 }
 
 - (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
     if (_eventSink != nil) {
         _eventSink(@{@"event" : @"pipStart"});
     }
+    if (self.completionHandler) {
+        self.completionHandler(YES, nil);
+    }
 }
 
-- (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController  API_AVAILABLE(ios(9.0)){
-
+- (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController {
+    [self.player pause];
+    if (_eventSink != nil) {
+        _eventSink(@{@"event" : @"willStopPiP"});
+    }
 }
 
 - (void)pictureInPictureControllerWillStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController {
-
+    if (_eventSink != nil) {
+        _eventSink(@{@"event" : @"willStartPiP"});
+    }
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController failedToStartPictureInPictureWithError:(NSError *)error {
-
+    if (_eventSink != nil) {
+        _eventSink(@{@"event" : @"failedToStartPiP", @"error" : error.localizedDescription});
+    }
+    if (self.completionHandler) {
+        self.completionHandler(NO, error);
+    }
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL))completionHandler {
@@ -753,9 +824,17 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     [self pause];
     [self disposeSansEventChannel];
     [_eventChannel setStreamHandler:nil];
-    [self disablePictureInPicture];
-    [self setPictureInPicture:false];
+
+    // Asynchronously disable Picture in Picture
+    [self setPictureInPicture:false completion:^(BOOL success, NSError *error) {
+        if (!success) {
+            NSLog(@"Error setting Picture in Picture: %@", error);
+            // Handle the error
+        }
+    }];
+
     _disposed = true;
 }
+
 
 @end

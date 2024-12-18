@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:pip_flutter/pipflutter_player_controller.dart';
 import 'package:pip_flutter/pipflutter_player_progress_colors.dart';
@@ -14,9 +15,8 @@ class PipFlutterPlayerCupertinoVideoProgressBar extends StatefulWidget {
     this.onDragStart,
     this.onDragUpdate,
     this.onTapDown,
-    Key? key,
-  })  : colors = colors ?? PipFlutterPlayerProgressColors(),
-        super(key: key);
+    super.key,
+  }) : colors = colors ?? PipFlutterPlayerProgressColors();
 
   final VideoPlayerController? controller;
   final PipFlutterPlayerController? pipFlutterPlayerController;
@@ -27,14 +27,13 @@ class PipFlutterPlayerCupertinoVideoProgressBar extends StatefulWidget {
   final Function()? onTapDown;
 
   @override
-  _VideoProgressBarState createState() {
-    return _VideoProgressBarState();
-  }
+  State<PipFlutterPlayerCupertinoVideoProgressBar> createState() =>
+      _PipFlutterPlayerCupertinoVideoProgressBarState();
 }
 
-class _VideoProgressBarState
+class _PipFlutterPlayerCupertinoVideoProgressBarState
     extends State<PipFlutterPlayerCupertinoVideoProgressBar> {
-  _VideoProgressBarState() {
+  _PipFlutterPlayerCupertinoVideoProgressBarState() {
     listener = () {
       setState(() {});
     };
@@ -72,35 +71,35 @@ class _VideoProgressBarState
         .controlsConfiguration
         .enableProgressBarDrag;
     return GestureDetector(
-      onHorizontalDragStart: (DragStartDetails details) {
+      onHorizontalDragStart: (DragStartDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
         _controllerWasPlaying = controller!.value.isPlaying;
         if (_controllerWasPlaying) {
-          controller!.pause();
+          await controller!.pause();
         }
 
         if (widget.onDragStart != null) {
           widget.onDragStart!();
         }
       },
-      onHorizontalDragUpdate: (DragUpdateDetails details) {
+      onHorizontalDragUpdate: (DragUpdateDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
 
         if (widget.onDragUpdate != null) {
           widget.onDragUpdate!();
         }
       },
-      onHorizontalDragEnd: (DragEndDetails details) {
+      onHorizontalDragEnd: (DragEndDetails details) async {
         if (!enableProgressBarDrag) {
           return;
         }
         if (_controllerWasPlaying) {
-          pipFlutterPlayerController?.play();
+          await pipFlutterPlayerController?.play();
           shouldPlayAfterDragEnd = true;
         }
         _setupUpdateBlockTimer();
@@ -109,12 +108,12 @@ class _VideoProgressBarState
           widget.onDragEnd!();
         }
       },
-      onTapDown: (TapDownDetails details) {
+      onTapDown: (TapDownDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
 
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
         _setupUpdateBlockTimer();
         if (widget.onTapDown != null) {
           widget.onTapDown!();
@@ -156,7 +155,7 @@ class _VideoProgressBarState
     }
   }
 
-  void seekToRelativePosition(Offset globalPosition) async {
+  Future<void> seekToRelativePosition(Offset globalPosition) async {
     final RenderObject? renderObject = context.findRenderObject();
     if (renderObject != null) {
       final box = renderObject as RenderBox;
@@ -166,20 +165,20 @@ class _VideoProgressBarState
         final Duration position = controller!.value.duration! * relative;
         lastSeek = position;
         await pipFlutterPlayerController!.seekTo(position);
-        onFinishedLastSeek();
+        await onFinishedLastSeek();
         if (relative >= 1) {
           lastSeek = controller!.value.duration;
           await pipFlutterPlayerController!.seekTo(controller!.value.duration!);
-          onFinishedLastSeek();
+          await onFinishedLastSeek();
         }
       }
     }
   }
 
-  void onFinishedLastSeek() {
+  Future<void> onFinishedLastSeek() async {
     if (shouldPlayAfterDragEnd) {
       shouldPlayAfterDragEnd = false;
-      pipFlutterPlayerController?.play();
+      await pipFlutterPlayerController?.play();
     }
   }
 }

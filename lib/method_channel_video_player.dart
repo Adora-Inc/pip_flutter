@@ -1,10 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:pip_flutter/pipflutter_player_buffering_configuration.dart';
 import 'package:pip_flutter/pipflutter_player_utils.dart';
-import 'pipflutter_player_buffering_configuration.dart';
-import 'video_player_platform_interface.dart';
+import 'package:pip_flutter/video_player_platform_interface.dart';
 
 const MethodChannel _channel = MethodChannel('pipflutter_player_channel');
 
@@ -220,9 +221,38 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
-  Future<void> enablePictureInPicture(int? textureId, double? top, double? left,
-      double? width, double? height) async {
-    return _channel.invokeMethod<void>(
+  Future<bool> enablePictureInPicture(int? textureId, double? top, double? left,
+      double? width, double? height, int? timeoutInMs) async {
+    /// Params tuned manually
+    const Duration warmUpDuration = Duration(milliseconds: 1000);
+    const int maxRetries = 1;
+    const int defaultTimeoutInMs = 2000;
+
+    /// This serves as a warmup for the player to be ready to enter PIP mode
+    /// If this suceeds, we return immediately, else, we try again
+    final bool didLaunch = await _enablePIPHelper(
+        textureId, top, left, width, height, warmUpDuration);
+    if (didLaunch) {
+      return true;
+    }
+
+    /// We try to launch PIP mode twice and throw an exception if it fails
+    final Duration timeoutDuration =
+        Duration(milliseconds: timeoutInMs ?? defaultTimeoutInMs);
+
+    for (int currentRetry = 0; currentRetry < maxRetries; currentRetry++) {
+      {
+        final bool didLaunch = await _enablePIPHelper(
+            textureId, top, left, width, height, timeoutDuration);
+        if (didLaunch) return true;
+      }
+    }
+    throw Exception('Failed to enable Picture in Picture');
+  }
+
+  Future<bool> _enablePIPHelper(int? textureId, double? top, double? left,
+      double? width, double? height, Duration timeoutDuration) async {
+    final methodCallFuture = _channel.invokeMethod<bool>(
       'enablePictureInPicture',
       <String, dynamic>{
         'textureId': textureId,
@@ -232,6 +262,15 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
         'height': height,
       },
     );
+
+    final timeoutFuture = Future.delayed(timeoutDuration, () => false);
+
+    final result = await Future.any([methodCallFuture, timeoutFuture]);
+
+    if (result != true) {
+      return false;
+    }
+    return true;
   }
 
   @override

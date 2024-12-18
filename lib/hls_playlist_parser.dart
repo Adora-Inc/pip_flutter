@@ -16,7 +16,7 @@ import 'package:pip_flutter/util.dart';
 import 'package:pip_flutter/variant.dart';
 import 'package:pip_flutter/variant_info.dart';
 
-import 'exception.dart';
+import 'package:pip_flutter/exception.dart';
 
 class HlsPlaylistParser {
   HlsPlaylistParser(this.masterPlaylist);

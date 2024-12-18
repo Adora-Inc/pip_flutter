@@ -8,12 +8,12 @@ class PipFlutterPlayerMultipleGestureDetector extends InheritedWidget {
   final void Function()? onLongPress;
 
   const PipFlutterPlayerMultipleGestureDetector({
-    Key? key,
-    required Widget child,
+    super.key,
+    required super.child,
     this.onTap,
     this.onDoubleTap,
     this.onLongPress,
-  }) : super(key: key, child: child);
+  });
 
   static PipFlutterPlayerMultipleGestureDetector? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<

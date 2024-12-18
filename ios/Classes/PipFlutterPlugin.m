@@ -1,4 +1,3 @@
-
 #import "PipFlutterPlugin.h"
 #import <pip_flutter/pip_flutter-Swift.h>
 
@@ -400,7 +399,16 @@ bool _remoteCommandsInitialized = false;
             double top = [argsMap[@"top"] doubleValue];
             double width = [argsMap[@"width"] doubleValue];
             double height = [argsMap[@"height"] doubleValue];
-            [player enablePictureInPicture:CGRectMake(left, top, width, height)];
+
+            [player enablePictureInPicture:CGRectMake(left, top, width, height) completion:^(BOOL success, NSError *error) {
+                if (success) {
+                    NSLog(@"PIP Started Successfully!");
+                    result(@(YES));
+                } else {
+                    NSLog(@"Error enabling PiP: %@", error);
+                    result(error.localizedDescription); // or some error code
+                }
+            }];
         } else if ([@"isPictureInPictureSupported" isEqualToString:call.method]){
             if (@available(iOS 9.0, *)){
                 if ([AVPictureInPictureController isPictureInPictureSupported]){
@@ -412,13 +420,25 @@ bool _remoteCommandsInitialized = false;
             result([NSNumber numberWithBool:false]);
         } else if ([@"disablePictureInPicture" isEqualToString:call.method]){
             [player disablePictureInPicture];
-            [player setPictureInPicture:false];
+
+            // Asynchronously set Picture in Picture to false
+            [player setPictureInPicture:false completion:^(BOOL success, NSError *error) {
+                if (!success) {
+                    NSLog(@"Error setting Picture in Picture: %@", error);
+                    // Handle the error
+                    result(error.localizedDescription); // Return the error description in the result
+                } else {
+                    result(nil); // Return success in the result
+                }
+            }];
         } else if ([@"setAudioTrack" isEqualToString:call.method]){
             NSString* name = argsMap[@"name"];
             int index = [argsMap[@"index"] intValue];
             [player setAudioTrack:name index: index];
+            result(nil);
         } else if ([@"setMixWithOthers" isEqualToString:call.method]){
             [player setMixWithOthers:[argsMap[@"mixWithOthers"] boolValue]];
+            result(nil);
         } else if ([@"preCache" isEqualToString:call.method]){
             NSDictionary* dataSource = argsMap[@"dataSource"];
             NSString* urlArg = dataSource[@"uri"];

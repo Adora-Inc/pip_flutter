@@ -25,4 +25,5 @@ enum PipFlutterPlayerEventType {
   bufferingUpdate,
   bufferingEnd,
   changedPlaylistItem,
+  unknown;
 }

@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface PipFlutter : NSObject <FlutterPlatformView, FlutterStreamHandler, AVPictureInPictureControllerDelegate>
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) PipFlutterEzDrmAssetsLoaderDelegate* loaderDelegate;
+@property (nonatomic, copy) void (^completionHandler)(BOOL success, NSError *error);
 @property(nonatomic) FlutterEventChannel* eventChannel;
 @property(nonatomic) FlutterEventSink eventSink;
 @property(nonatomic) CGAffineTransform preferredTransform;
@@ -51,8 +52,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setSpeed:(double)speed result:(FlutterResult)result;
 - (void) setAudioTrack:(NSString*) name index:(int) index;
 - (void)setTrackParameters:(int) width: (int) height: (int)bitrate;
-- (void) enablePictureInPicture: (CGRect) frame;
-- (void)setPictureInPicture:(BOOL)pictureInPicture;
+- (void)enablePictureInPicture:(CGRect)frame completion:(void (^)(BOOL success, NSError *error))completion;
+- (void)setPictureInPicture:(BOOL)pictureInPicture completion:(void (^)(BOOL success, NSError *error))completion;
 - (void)disablePictureInPicture;
 - (int64_t)absolutePosition;
 - (int64_t) FLTCMTimeToMillis:(CMTime) time;

@@ -1,6 +1,6 @@
 import 'package:pip_flutter/pipflutter_player_asms_subtitle_segment.dart';
 
-import 'pipflutter_player_subtitles_source_type.dart';
+import 'package:pip_flutter/pipflutter_player_subtitles_source_type.dart';
 
 ///Representation of subtitles source. Used to define subtitles in Better
 /// Player.

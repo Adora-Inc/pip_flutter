@@ -7,15 +7,11 @@ class PipFlutterPlayerSubtitle {
   final Duration? end;
   final List<String>? texts;
 
-  ///VTT OR SRT
-  final String? type;
-
   PipFlutterPlayerSubtitle._({
     this.index,
     this.start,
     this.end,
     this.texts,
-    this.type,
   });
 
   factory PipFlutterPlayerSubtitle(String value, bool isWebVTT) {
@@ -114,6 +110,6 @@ class PipFlutterPlayerSubtitle {
 
   @override
   String toString() {
-    return 'PipFlutterPlayerSubtitle{index: $index, start: $start, end: $end, texts: $texts, type: $type}';
+    return 'PipFlutterPlayerSubtitle{index: $index, start: $start, end: $end, texts: $texts}';
   }
 }
