@@ -1,6 +1,5 @@
 
 #import "PipFlutter.h"
-#import <pip_flutter/pip_flutter-Swift.h>
 
 static void* timeRangeContext = &timeRangeContext;
 static void* statusContext = &statusContext;
@@ -187,40 +186,30 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
   return transform;
 }
 
-- (void)setDataSourceAsset:(NSString*)asset withKey:(NSString*)key withCertificateUrl:(NSString*)certificateUrl withLicenseUrl:(NSString*)licenseUrl cacheKey:(NSString*)cacheKey cacheManager:(CacheManager*)cacheManager overriddenDuration:(int) overriddenDuration{
+- (void)setDataSourceAsset:(NSString*)asset withKey:(NSString*)key withCertificateUrl:(NSString*)certificateUrl withLicenseUrl:(NSString*)licenseUrl overriddenDuration:(int) overriddenDuration{
     NSString* path = [[NSBundle mainBundle] pathForResource:asset ofType:nil];
-    return [self setDataSourceURL:[NSURL fileURLWithPath:path] withKey:key withCertificateUrl:certificateUrl withLicenseUrl:(NSString*)licenseUrl withHeaders: @{} withCache: false cacheKey:cacheKey cacheManager:cacheManager overriddenDuration:overriddenDuration videoExtension: nil];
+    return [self setDataSourceURL:[NSURL fileURLWithPath:path] withKey:key withCertificateUrl:certificateUrl withLicenseUrl:(NSString*)licenseUrl withHeaders: @{} overriddenDuration:overriddenDuration];
 }
 
-- (void)setDataSourceURL:(NSURL*)url withKey:(NSString*)key withCertificateUrl:(NSString*)certificateUrl withLicenseUrl:(NSString*)licenseUrl withHeaders:(NSDictionary*)headers withCache:(BOOL)useCache cacheKey:(NSString*)cacheKey cacheManager:(CacheManager*)cacheManager overriddenDuration:(int) overriddenDuration videoExtension: (NSString*) videoExtension{
+- (void)setDataSourceURL:(NSURL*)url withKey:(NSString*)key withCertificateUrl:(NSString*)certificateUrl withLicenseUrl:(NSString*)licenseUrl withHeaders:(NSDictionary*)headers overriddenDuration:(int) overriddenDuration{
     _overriddenDuration = 0;
     if (headers == [NSNull null] || headers == NULL){
         headers = @{};
     }
     
     AVPlayerItem* item;
-    if (useCache){
-        if (cacheKey == [NSNull null]){
-            cacheKey = nil;
-        }
-        if (videoExtension == [NSNull null]){
-            videoExtension = nil;
-        }
-        
-        item = [cacheManager getCachingPlayerItemForNormalPlayback:url cacheKey:cacheKey videoExtension: videoExtension headers:headers];
-    } else {
-        AVURLAsset* asset = [AVURLAsset URLAssetWithURL:url
-                                                options:@{@"AVURLAssetHTTPHeaderFieldsKey" : headers}];
-        if (certificateUrl && certificateUrl != [NSNull null] && [certificateUrl length] > 0) {
-            NSURL * certificateNSURL = [[NSURL alloc] initWithString: certificateUrl];
-            NSURL * licenseNSURL = [[NSURL alloc] initWithString: licenseUrl];
-            _loaderDelegate = [[PipFlutterEzDrmAssetsLoaderDelegate alloc] init:certificateNSURL withLicenseURL:licenseNSURL];
-            dispatch_queue_attr_t qos = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_DEFAULT, -1);
-            dispatch_queue_t streamQueue = dispatch_queue_create("streamQueue", qos);
-            [asset.resourceLoader setDelegate:_loaderDelegate queue:streamQueue];
-        }
-        item = [AVPlayerItem playerItemWithAsset:asset];
+    AVURLAsset* asset = [AVURLAsset URLAssetWithURL:url
+                                            options:@{@"AVURLAssetHTTPHeaderFieldsKey" : headers}];
+    if (certificateUrl && certificateUrl != [NSNull null] && [certificateUrl length] > 0) {
+        NSURL * certificateNSURL = [[NSURL alloc] initWithString: certificateUrl];
+        NSURL * licenseNSURL = [[NSURL alloc] initWithString: licenseUrl];
+        _loaderDelegate = [[PipFlutterEzDrmAssetsLoaderDelegate alloc] init:certificateNSURL withLicenseURL:licenseNSURL];
+        dispatch_queue_attr_t qos = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_DEFAULT, -1);
+        dispatch_queue_t streamQueue = dispatch_queue_create("streamQueue", qos);
+        [asset.resourceLoader setDelegate:_loaderDelegate queue:streamQueue];
     }
+    item = [AVPlayerItem playerItemWithAsset:asset];
+    
 
     if (@available(iOS 10.0, *) && overriddenDuration > 0) {
         _overriddenDuration = overriddenDuration;
