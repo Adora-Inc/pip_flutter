@@ -1,5 +1,4 @@
 #import "PipFlutterPlugin.h"
-#import <pip_flutter/pip_flutter-Swift.h>
 
 #if !__has_feature(objc_arc)
 #error Code Requires ARC.
@@ -10,7 +9,6 @@
 NSMutableDictionary* _dataSourceDict;
 NSMutableDictionary*  _timeObserverIdDict;
 NSMutableDictionary*  _artworkImageDict;
-CacheManager* _cacheManager;
 int texturesCount = -1;
 PipFlutter* _notificationPlayer;
 bool _remoteCommandsInitialized = false;
@@ -36,8 +34,6 @@ bool _remoteCommandsInitialized = false;
     _timeObserverIdDict = [NSMutableDictionary dictionary];
     _artworkImageDict = [NSMutableDictionary dictionary];
     _dataSourceDict = [NSMutableDictionary dictionary];
-    _cacheManager = [[CacheManager alloc] init];
-    [_cacheManager setup];
     return self;
 }
 
@@ -303,22 +299,10 @@ bool _remoteCommandsInitialized = false;
             NSString* certificateUrl = dataSource[@"certificateUrl"];
             NSString* licenseUrl = dataSource[@"licenseUrl"];
             NSDictionary* headers = dataSource[@"headers"];
-            NSString* cacheKey = dataSource[@"cacheKey"];
-            NSNumber* maxCacheSize = dataSource[@"maxCacheSize"];
-            NSString* videoExtension = dataSource[@"videoExtension"];
             
             int overriddenDuration = 0;
             if ([dataSource objectForKey:@"overriddenDuration"] != [NSNull null]){
                 overriddenDuration = [dataSource[@"overriddenDuration"] intValue];
-            }
-
-            BOOL useCache = false;
-            id useCacheObject = [dataSource objectForKey:@"useCache"];
-            if (useCacheObject != [NSNull null]) {
-                useCache = [[dataSource objectForKey:@"useCache"] boolValue];
-                if (useCache){
-                    [_cacheManager setMaxCacheSize:maxCacheSize];
-                }
             }
 
             if (headers == [NSNull null] || headers == NULL){
@@ -333,9 +317,9 @@ bool _remoteCommandsInitialized = false;
                 } else {
                     assetPath = [_registrar lookupKeyForAsset:assetArg];
                 }
-                [player setDataSourceAsset:assetPath withKey:key withCertificateUrl:certificateUrl withLicenseUrl: licenseUrl cacheKey:cacheKey cacheManager:_cacheManager overriddenDuration:overriddenDuration];
+                [player setDataSourceAsset:assetPath withKey:key withCertificateUrl:certificateUrl withLicenseUrl: licenseUrl overriddenDuration:overriddenDuration];
             } else if (uriArg) {
-                [player setDataSourceURL:[NSURL URLWithString:uriArg] withKey:key withCertificateUrl:certificateUrl withLicenseUrl: licenseUrl withHeaders:headers withCache: useCache cacheKey:cacheKey cacheManager:_cacheManager overriddenDuration:overriddenDuration videoExtension: videoExtension];
+                [player setDataSourceURL:[NSURL URLWithString:uriArg] withKey:key withCertificateUrl:certificateUrl withLicenseUrl: licenseUrl withHeaders:headers overriddenDuration:overriddenDuration];
             } else {
                 result(FlutterMethodNotImplemented);
             }
@@ -439,49 +423,11 @@ bool _remoteCommandsInitialized = false;
         } else if ([@"setMixWithOthers" isEqualToString:call.method]){
             [player setMixWithOthers:[argsMap[@"mixWithOthers"] boolValue]];
             result(nil);
-        } else if ([@"preCache" isEqualToString:call.method]){
-            NSDictionary* dataSource = argsMap[@"dataSource"];
-            NSString* urlArg = dataSource[@"uri"];
-            NSString* cacheKey = dataSource[@"cacheKey"];
-            NSDictionary* headers = dataSource[@"headers"];
-            NSNumber* maxCacheSize = dataSource[@"maxCacheSize"];
-            NSString* videoExtension = dataSource[@"videoExtension"];
-            
-            if (headers == [ NSNull null ]){
-                headers = @{};
-            }
-            if (videoExtension == [NSNull null]){
-                videoExtension = nil;
-            }
-            
-            if (urlArg != [NSNull null]){
-                NSURL* url = [NSURL URLWithString:urlArg];
-                if ([_cacheManager isPreCacheSupportedWithUrl:url videoExtension:videoExtension]){
-                    [_cacheManager setMaxCacheSize:maxCacheSize];
-                    [_cacheManager preCacheURL:url cacheKey:cacheKey videoExtension:videoExtension withHeaders:headers completionHandler:^(BOOL success){
-                    }];
-                } else {
-                    NSLog(@"Pre cache is not supported for given data source.");
-                }
-            }
-            result(nil);
-        } else if ([@"clearCache" isEqualToString:call.method]){
-            [_cacheManager clearCache];
-            result(nil);
-        } else if ([@"stopPreCache" isEqualToString:call.method]){
-            NSString* urlArg = argsMap[@"url"];
-            NSString* cacheKey = argsMap[@"cacheKey"];
-            NSString* videoExtension = argsMap[@"videoExtension"];
-            if (urlArg != [NSNull null]){
-                NSURL* url = [NSURL URLWithString:urlArg];
-                if ([_cacheManager isPreCacheSupportedWithUrl:url videoExtension:videoExtension]){
-                    [_cacheManager stopPreCache:url cacheKey:cacheKey
-                              completionHandler:^(BOOL success){
-                    }];
-                } else {
-                    NSLog(@"Stop pre cache is not supported for given data source.");
-                }
-            }
+        } else if ([@"preCache" isEqualToString:call.method] ||
+                   [@"clearCache" isEqualToString:call.method] ||
+                   [@"stopPreCache" isEqualToString:call.method]) {
+            // Video caching was removed on iOS: it depended on GCDWebServer, which has no
+            // Swift Package Manager support. Reply anyway so Dart callers still complete.
             result(nil);
         } else {
             result(FlutterMethodNotImplemented);
